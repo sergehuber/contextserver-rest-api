@@ -1,0 +1,111 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: CXS REST API
+  description: Specification of the CXS Oasis Standard 
+  version: "1.0.0"
+# the domain of the service
+host: cxs.oasisopen.org
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+basePath: /v1
+produces:
+  - application/json
+paths:
+  /profile:
+    get:
+      summary: Profiles
+      description: |
+        Access all profiles.
+      parameters:
+        - name: query
+          in: query
+          description: Valid query string
+          required: false
+          type: string
+          format: TBD
+        - name: properties
+          in: query
+          description: Specify the properties to be returned, use * to return all. If not specified profile ids will be returned
+          required: false
+          type: array
+          items: 
+            type: string
+        - name: pageSize
+          in: query
+          description: Number of items to be returned
+          required: false
+          type: number
+          format: short
+        - name: offset
+          in: query
+          description: Specify property to order by
+          required: false
+          type: string
+          format: propertyname ASC|DESC
+        - name: orderBy
+          in: query
+          description: Specify property to order by
+          required: false
+          type: string
+          format: propertyname ASC|DESC
+      tags:
+        - Profiles
+      responses:
+        200:
+          description: An array of profiles
+          schema:
+            type: object
+            items:
+              $ref: '#/definitions/ProfileResult'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+ 
+definitions:
+  ProfileResult:
+    type: object
+    properties:
+      total:
+        type: number
+        format: long
+        description: Total number of profiles matching this query
+      offset:
+        type: number
+        format: long
+        description: The requested offset in number of items, starting at 0
+      pageSize:
+        type: number
+        format: short
+        description: Requested number of items to be returned
+      hits:
+        type: array
+        description: Query result
+        items:
+          $ref: '#/definitions/Profile'
+  Profile:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
+
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
