@@ -65,7 +65,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
- 
+
+  /profile/{profileId}:
+    get:
+      summary: Get explicit profile
+      description: Access a specific profile.
+      parameters: 
+        - name: profileId
+          in: path
+          description: Specify the profiles unique ID
+          type: string
+          required: true
+      tags:  
+        - Profile
+      responses:
+        200:
+          description: A single profile
+          schema:
+            type: object
+            items:
+              $ref: '#/definitions/Profile'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
 definitions:
   ProfileResult:
     type: object
@@ -87,16 +111,16 @@ definitions:
         description: Query result
         items:
           $ref: '#/definitions/Profile'
+
   Profile:
     type: object
     properties:
-      code:
-        type: integer
-        format: int32
-      message:
+      _id:
         type: string
-      fields:
-        type: string
+        format: uuid
+    additionalProperties:
+      type: object
+
 
 
   Error:
