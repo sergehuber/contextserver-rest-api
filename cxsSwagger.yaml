@@ -46,37 +46,11 @@ paths:
       description: |
         Access all profiles.
       parameters:
-        - name: query
-          in: query
-          description: Valid query string
-          required: false
-          type: string
-          format: TBD
-        - name: properties
-          in: query
-          description: Specify the properties to be returned, use * to return all. If not specified profile ids will be returned
-          required: false
-          type: array
-          items: 
-            type: string
-        - name: pageSize
-          in: query
-          description: Number of items to be returned
-          required: false
-          type: number
-          format: short
-        - name: offset
-          in: query
-          description: Specify property to order by
-          required: false
-          type: string
-          format: propertyname ASC|DESC
-        - name: orderBy
-          in: query
-          description: Specify property to order by
-          required: false
-          type: string
-          format: propertyname ASC|DESC
+        - $ref: '#/parameters/query'
+        - $ref: '#/parameters/properties'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+        - $ref: '#/parameters/orderBy'
       tags:
         - Profiles
       responses:
@@ -125,7 +99,43 @@ parameters:
     description: The unique identifier of the tracker defined in your repository.
     required: true
     type: string
-
+  query:  
+    name: query
+    in: query
+    description: Valid query string
+    required: false
+    type: string
+    format: TBD
+  properties: 
+    name: properties
+    in: query
+    description: Specify the properties to be returned, use * to return all. If not specified profile ids will be returned
+    required: false
+    type: array
+    items: 
+      type: string
+  pageSize:
+    name: pageSize
+    in: query
+    description: Number of items to be returned
+    required: false
+    type: number
+    format: short
+  offset:
+    name: offset
+    in: query
+    description: Specify property to order by
+    required: false
+    type: string
+    format: propertyname ASC|DESC
+  orderBy:
+    name: orderBy
+    in: query
+    description: Specify property to order by
+    required: false
+    type: string
+    format: propertyname ASC|DESC
+    
 ################################################################################
 #                                 Definitions                                  #
 ################################################################################
