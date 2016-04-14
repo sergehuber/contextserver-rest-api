@@ -52,7 +52,7 @@ paths:
         - $ref: '#/parameters/offset'
         - $ref: '#/parameters/orderBy'
       tags:
-        - Profiles
+        - Profile
       responses:
         200:
           description: An array of profiles
