@@ -15,6 +15,31 @@ basePath: /v1
 produces:
   - application/json
 paths:
+  /event/collect/{trackingId}:
+    post:
+      summary: An endpoint for data collection
+      description: |
+        Collect single or batched events from any client. This endpoint doesn't require any authentication but requires a valid sourceId. 
+      parameters:
+        - $ref: '#/parameters/trackingId'
+        - name: payload
+          description: An array of Event objects
+          in: body
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CreateEvent'
+      tags:
+        - Events
+      responses:
+        204:
+          description: No response returned in order to optimize perfromance
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
   /profile:
     get:
       summary: Profiles
@@ -90,6 +115,20 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+################################################################################
+#                                   Parameters                                 #
+################################################################################
+parameters:
+  trackingId:
+    name: trackingId
+    in: path
+    description: The unique identifier of the tracker defined in your repository.
+    required: true
+    type: string
+
+################################################################################
+#                                 Definitions                                  #
+################################################################################
 definitions:
   ProfileResult:
     type: object
@@ -121,7 +160,44 @@ definitions:
     additionalProperties:
       type: object
 
-
+  CreateEvent:
+    type: object
+    properties:
+      _eventType: 
+        type: string
+        description: the type of the current event
+        # should we name it object, item or other instead?
+      _target: 
+        type: string
+        description: The item/object the user interacted with
+        # Should the Profile Id be available also as a cookie?
+      _profileId:
+        type: string
+      _timestamp:
+        type: string
+        format: date-time
+    required: ['_eventType', '_target', '_profileId']
+  
+#  Event:
+#    type: object
+#    properties:
+#      _id:
+#        type: string
+#      _eventType: 
+#        type: string
+#        description: the type of the current event
+#        # should we name it object, item or other instead?
+#      _target: 
+#        type: string
+#        description: The item/object the user interacted with
+#        # Should the Profile Id be available also as a cookie?
+#      _profileId:
+#        type: string
+#      _timestamp:
+#        type: string
+#        format: date-time
+#    required: ['_eventType', '_target', '_profileId']
+      
 
   Error:
     type: object
