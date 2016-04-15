@@ -57,12 +57,11 @@ paths:
         200:
           description: An array of profiles
           schema:
-            type: object
-            items:
-              $ref: '#/definitions/ProfileResult'
+           $ref: '#/definitions/ProfileResult'
           examples: 
             application/json:
-              { total: 2000, offset: 0, pageSize: 2,
+              { 
+                total: 2000, offset: 0, pageSize: 2,
                 hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
               }
         default:
@@ -86,8 +85,6 @@ paths:
         200:
           description: A single profile
           schema:
-            type: object
-            items:
               $ref: '#/definitions/Profile'
           examples: 
             application/json:
