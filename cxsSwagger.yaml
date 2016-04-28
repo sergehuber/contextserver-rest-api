@@ -19,7 +19,7 @@ paths:
     post:
       summary: An endpoint for data collection
       description: |
-        Collect single or batched events from any client. This endpoint doesn't require any authentication but requires a valid sourceId. 
+        Collect single or batched events from any client. This endpoint doesn't require any authentication but requires a valid trackingId. 
       parameters:
         - $ref: '#/parameters/trackingId'
         - name: payload
@@ -178,20 +178,27 @@ definitions:
   CreateEvent:
     type: object
     properties:
-      _eventType: 
+      eventType: 
         type: string
-        description: the type of the current event
-        # should we name it object, item or other instead?
-      _target: 
+        description: The type of the current event. Eg. PageView, Click, Hover, Scroll, Bought, MailShot...
+      objectId: 
         type: string
-        description: The item/object the user interacted with
-        # Should the Profile Id be available also as a cookie?
-      _profileId:
+        description: The item/object the user interacted with. Eg. Page URL, Product Name, Mail shot Id...
+      subjectId:
         type: string
-      _timestamp:
+        description: Source unique id identifying the web page visitor or contact in the CRM system. The id can be optained from cookie or directly from the source system. The used tracking id should be bound to a specific source. If a unique id cannot be generated, the context server can issue one for you.
+      geoLocation:
+        type: string
+        format: geoPoint
+        description: 
+      timestamp:
         type: string
         format: date-time
-    required: ['_eventType', '_target', '_profileId']
+        description: If not specified, the context server uses time of submission.
+      data:
+        type: object
+        description: Optional event specific information.
+    required: ['eventType', 'target', 'profileId']
   
 #  Event:
 #    type: object
