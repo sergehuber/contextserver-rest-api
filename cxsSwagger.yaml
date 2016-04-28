@@ -190,7 +190,7 @@ definitions:
       geoLocation:
         type: string
         format: geoPoint
-        description: 
+        description: TBD
       timestamp:
         type: string
         format: date-time
@@ -198,7 +198,7 @@ definitions:
       data:
         type: object
         description: Optional event specific information.
-    required: ['eventType', 'target', 'profileId']
+    required: ['eventType', 'objectId', 'subjectId']
   
 #  Event:
 #    type: object
