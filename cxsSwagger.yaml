@@ -39,6 +39,45 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /event/type:
+    get:
+      summary: An endpoint returning all available event types
+      description: |
+        Collect of event types. 
+      parameters:
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+        - $ref: '#/parameters/orderBy'
+      tags:
+        - Events
+      responses:
+        200:
+          description: An array of event types
+          schema:
+           $ref: '#/definitions/EventTypeResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                hits: [
+                  {id: 'pageView', description: 'User has visited a web page', schema: {
+                          properties: {
+                        		pageTitle: {
+                        			type: 'string'
+                        		},
+                        		tags: {
+                        			type: 'string'
+                        		}
+                        	},
+                        	required: []
+                        }
+                  }
+                ]
+              }  
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 
   /profile:
     get:
@@ -165,6 +204,38 @@ definitions:
         description: Query result
         items:
           $ref: '#/definitions/Profile'
+          
+  EventTypeResult:
+    type: object
+    properties:
+      total:
+        type: number
+        format: long
+        description: Total number of event types
+      offset:
+        type: number
+        format: long
+        description: The requested offset in number of items, starting at 0
+      pageSize:
+        type: number
+        format: short
+        description: Requested number of items to be returned
+      hits:
+        type: array
+        description: result
+        items:
+          $ref: '#/definitions/EventType'
+          
+  EventType:
+    type: object
+    properties:
+      id:
+        type: string
+        description: the unique identifier of th event type. Custom event types mist be prefixed with namespace for example mycompany.<eventTypeId>.
+      schema:
+        type: object
+        description: JSON schema for optional event's data. For more info see http://json-schema.org/documentation.html
+
 
   Profile:
     type: object
