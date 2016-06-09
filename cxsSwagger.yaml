@@ -33,7 +33,7 @@ paths:
         - Events
       responses:
         204:
-          description: No response returned in order to optimize perfromance
+          description: No response returned in order to optimize performance
         default:
           description: Unexpected error
           schema:
