@@ -179,10 +179,20 @@ parameters:
   query:  
     name: query
     in: query
-    description: Valid object specific query string
+    description: | 
+      Valid object-specific query string. The elements of the query are boolean returning functions that may be combined using AND,OR,NOT operators as well as parentheses to group and clarify operator precedence. Functions may take multiple parameter and context server implementations must implement a minimal standardized set of functions defined here, but may also provide additional functions that are not specified in this document. 
+      A complex example would look like this
+      greaterThan('age',30) AND lowerThan('age',50) AND closeTo('town', 'geneva')
+      Here below are the required built-in function that implementations must provide
+      equals(propertyName,value) / eq / =
+      greaterThan(propertyName,value) / gt / > 
+      greaterOrEqual(propertyName,value) / gte / >=
+      lessThan(propertyName,value) / lt
+      lessOrEqual(propertyName,value) / lte
+      TO BE COMPLETED
     required: false
     type: string
-    format: TBD
+    format: conditionExpression
   properties: 
     name: properties
     in: query
@@ -197,14 +207,14 @@ parameters:
     description: Number of items to be returned
     required: false
     type: number
-    format: short
+    format: long
   offset:
     name: offset
     in: query
-    description: Specify property to order by
+    description: Offset in number of items in query result set
     required: false
-    type: string
-    format: propertyname ASC|DESC
+    type: number
+    format: long 
   orderBy:
     name: orderBy
     in: query
@@ -219,25 +229,16 @@ parameters:
 definitions:
   ProfileResult:
     type: object
-    properties:
-      total:
-        type: number
-        format: long
-        description: Total number of profiles matching this query
-      offset:
-        type: number
-        format: long
-        description: The requested offset in number of items, starting at 0
-      pageSize:
-        type: number
-        format: short
-        description: Requested number of items to be returned
-      hits:
-        type: array
-        description: Query result
-        items:
-          $ref: '#/definitions/Profile'
-          
+    allOf:
+      - $ref: '#/definitions/QueryResult'
+      - type: object
+        properties:
+          hits:
+            type: array
+            description: Query result
+            items:
+              $ref: '#/definitions/Profile'
+            
   EventTypeResult:
     type: object
     properties:
@@ -326,7 +327,12 @@ definitions:
       
   QueryResult:
     type: object
+    discriminator: resultType
+    required:
+      - resultType # required for inheritance to work
     properties:
+      resultType:
+        type: string
       total:
         type: number
         format: long
