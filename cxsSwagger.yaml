@@ -268,11 +268,8 @@ parameters:
     in: body
     description: Specify property to order query results by
     required: false
-    schema: 
-      type: object
-      
-    type: string
-    format: propertyName ASC | DESC 
+    schema:
+      $ref: '#/definitions/ComplexQuery'
   reverseOrder:
     name: reverse
     in: query
@@ -286,6 +283,15 @@ parameters:
 #                                 Definitions                                  #
 ################################################################################
 definitions:
+  ComplexQuery:
+    type: object
+    allOf:
+      # TODO:
+      - $ref: '#/definitions/ProfileResult'
+      #    - $ref: '#/definitions/Query'
+      #    - $ref: '#/definitions/Properties'
+      #    - $ref: '#/definitions/OrderBy'
+
   ProfileResult:
     type: object
     allOf:
