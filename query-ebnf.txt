@@ -1,0 +1,22 @@
+/* Create a railroad diagram at http://www.bottlecaps.de/rr/ui */
+
+StringLiteral   ::= '"' [^"]* '"' | "'" [^']* "'"
+NumberLiteral   ::= [0-9]+ ( '.' [0-9]+)
+FunctionName    ::= [a-zA-Z][0-9a-zA-Z]*
+FunctionArg     ::= ( StringLiteral | NumberLiteral )
+FunctionArgs    ::= FunctionArg? ( ',' FunctionArg )*
+FunctionCall    ::= FunctionName '(' FunctionArgs ')'
+Clause          ::= ( 'NOT' FunctionCall | FunctionCall 'AND' FunctionCall | FunctionCall 'OR' FunctionCall )
+ParenClause     ::= '(' Clause ')'
+Query           ::= Clause ( Clause | ParenClause )*
+
+
+/*
+greaterThan('age',30) AND lowerThan('age',50) AND closeTo('town', 'geneva')
+      Here below are the required built-in function that implementations must provide
+      equals(propertyName,value) / eq / =
+      greaterThan(propertyName,value) / gt / >
+      greaterOrEqual(propertyName,value) / gte / >=
+      lessThan(propertyName,value) / lt
+      lessOrEqual(propertyName,value) / lte
+*/
