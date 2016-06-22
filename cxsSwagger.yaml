@@ -1,5 +1,3 @@
-# this is an example of the Uber API
-# as a demonstration of an API spec in YAML
 swagger: '2.0'
 info:
   title: CXS REST API
@@ -79,19 +77,50 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /profile:
+  /profiles:
     get:
-      summary: Profiles
+      summary: Profile retrieval by simple query
       description: |
-        Access all profiles.
+        Access all profiles matching a simple query based
+        on matching a single property to a value. The resulsts will automatically be ordered by natural ascending order of the specified property. This endpoint could for example be used to implement
+        auto-completion mechanisms
       parameters:
-        - $ref: '#/parameters/query'
+        - $ref: '#/parameters/simpleQueryPropertyName'
+        - $ref: '#/parameters/simpleQueryPropertyValue'
         - $ref: '#/parameters/properties'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/offset'
-        - $ref: '#/parameters/orderBy'
+        - $ref: '#/parameters/reverseOrder'
       tags:
         - Profile
+        - Query
+      responses:
+        200:
+          description: An array of profiles
+          schema:
+           $ref: '#/definitions/ProfileResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Profile retrieval by complex query
+      description: |
+        Access all profiles matching a complex query
+      parameters:
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+        - $ref: '#/parameters/complexQueryBody'
+      tags:
+        - Profile
+        - Query
       responses:
         200:
           description: An array of profiles
@@ -108,7 +137,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /profile/{profileId}:
+  /profiles/{profileId}:
     get:
       summary: Get explicit profile
       description: Access a specific profile.
@@ -176,6 +205,18 @@ parameters:
     description: The unique identifier of the tracker defined in your repository.
     required: true
     type: string
+  simpleQueryPropertyName:
+    name: propName
+    in: query
+    description: Name of the property to match a value against (value specified in "propValue" parameter). Implementations might allow for wildcards characters
+    required: true
+    type: string
+  simpleQueryPropertyValue:
+    name: propValue
+    in: query
+    description: Value of the property specified in "propName" to make against. Implementations might allow values to include wildcards or regular expressions
+    required: true
+    type: string
   query:  
     name: query
     in: query
@@ -218,11 +259,29 @@ parameters:
   orderBy:
     name: orderBy
     in: query
-    description: Specify property to order by
+    description: Specify property to order query results by
     required: false
     type: string
-    format: propertyname ASC|DESC
-    
+    format: propertyName ASC | DESC 
+  complexQueryBody:
+    name: body
+    in: body
+    description: Specify property to order query results by
+    required: false
+    schema: 
+      type: object
+      
+    type: string
+    format: propertyName ASC | DESC 
+  reverseOrder:
+    name: reverse
+    in: query
+    description: If true, the query results will be in reverse order
+    required: false
+    type: boolean
+    format: truthy, any value apart from false or 0 will 
+      be true
+
 ################################################################################
 #                                 Definitions                                  #
 ################################################################################
@@ -345,11 +404,27 @@ definitions:
         type: number
         format: short
         description: Requested number of items to be returned
+      orderBy:
+        type: array
+        items:
+          $ref: '#/definitions/OrderByPart'
       hits:
         type: array
         description: Query result
         items:
-          type: object    
+          type: object  
+          
+  OrderByPart:
+    type: object
+    description: A single part of a orderBy clause
+    properties: 
+      propertyName:
+        type: string
+        description : This parameter is required
+      order: 
+        type: string
+        format: DESC
+        description : This parameter is optional, if not specified it will default to ASC
 
   Error:
     type: object
