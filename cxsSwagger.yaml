@@ -28,7 +28,7 @@ paths:
             items:
               $ref: '#/definitions/CreateEvent'
       tags:
-        - Events
+        - Event
       responses:
         204:
           description: No response returned in order to optimize performance
@@ -47,7 +47,7 @@ paths:
         - $ref: '#/parameters/offset'
         - $ref: '#/parameters/orderBy'
       tags:
-        - Events
+        - Event
       responses:
         200:
           description: An array of event types
@@ -72,6 +72,41 @@ paths:
                   }
                 ]
               }  
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /events:
+    get:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events - if the query object is omitted - all events will be included in the result using default values for pageSize, offset and properties 
+      parameters:
+        - $ref: '#/parameters/properties'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+#        - $ref: '#/parameters/orderBy'
+        - name: query
+          description: Event query definition
+          in: body
+          schema:
+            $ref: '#/definitions/Query'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
         default:
           description: Unexpected error
           schema:
@@ -237,7 +272,7 @@ parameters:
   properties: 
     name: properties
     in: query
-    description: Specify the properties to be returned, use * to return all. If not specified profile ids will be returned
+    description: Specify the properties to be returned, use * to return all. If not specified, identifier property will be returned (hmm. should we force developers to specify properties?)
     required: false
     type: array
     items: 
@@ -283,6 +318,7 @@ parameters:
 #                                 Definitions                                  #
 ################################################################################
 definitions:
+
   ComplexQuery:
     type: object
     allOf:
@@ -291,6 +327,55 @@ definitions:
       #    - $ref: '#/definitions/Query'
       #    - $ref: '#/definitions/Properties'
       #    - $ref: '#/definitions/OrderBy'
+
+ 
+  Query:
+    type: object
+    description: A container for query functions
+    properties: 
+      function:
+        type: object
+        description: '<function>: [args]'
+      orderBy:
+        $ref: '#/definitions/OrderByPart'
+
+
+# example 1
+#       {  
+#        and:[{
+#         geoDistance[ {
+#            geoLocation : 'x',
+#            distance : 'y', }]
+#           },
+#         {  
+#         in:[1,2,3]
+#         }]
+#       } 
+
+#    example2 -verbose:
+#      application/json:
+#       {  
+#        function:'and',
+#        arguments:[  
+#        {
+#          function:'geoDistance',
+#          arguments: [ {
+#            geoLocation : '',
+#            distance : '', 
+#            function : ''
+#          }]
+#        },
+#        {  
+#        function: 'in',
+#        arguments:[1,2,3]
+#      }
+#     ]
+#    } 
+
+
+
+
+
 
   ProfileResult:
     type: object
@@ -303,7 +388,32 @@ definitions:
             description: Query result
             items:
               $ref: '#/definitions/Profile'
+  
+  
+  Profile:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: uuid
+    additionalProperties:
+      type: object
+  
+  
             
+  EventResult:
+    type: object
+    allOf:
+      - $ref: '#/definitions/QueryResult'
+      - type: object
+        properties:
+          hits:
+            type: array
+            description: Query result
+            items:
+              $ref: '#/definitions/Event'          
+  
+  
   EventTypeResult:
     type: object
     properties:
@@ -336,18 +446,11 @@ definitions:
         description: JSON schema for optional event's data. For more info see http://json-schema.org/documentation.html
 
 
-  Profile:
-    type: object
-    properties:
-      _id:
-        type: string
-        format: uuid
-    additionalProperties:
-      type: object
 
   CreateEvent:
     type: object
     properties:
+# Hmm reuse from event definition?
       eventType: 
         type: string
         description: The type of the current event. Eg. PageView, Click, Hover, Scroll, Bought, MailShot...
@@ -370,25 +473,34 @@ definitions:
         description: Optional event specific information.
     required: ['eventType', 'objectId', 'subjectId']
   
-#  Event:
-#    type: object
-#    properties:
-#      _id:
-#        type: string
-#      _eventType: 
-#        type: string
-#        description: the type of the current event
-#        # should we name it object, item or other instead?
-#      _target: 
-#        type: string
-#        description: The item/object the user interacted with
-#        # Should the Profile Id be available also as a cookie?
-#      _profileId:
-#        type: string
-#      _timestamp:
-#        type: string
-#        format: date-time
-#    required: ['_eventType', '_target', '_profileId']
+  Event:
+    type: object
+    properties:
+      _id:
+        type: string
+      eventType: 
+        type: string
+        description: the type of the current event
+        # should we name it object, item or other instead?
+      objectId: 
+        type: string
+        description: The item/object the user interacted with
+        # Should the Profile Id be available also as a cookie?
+      subjectId:
+        type: string
+      geoLocation:
+        type: string
+        format: geoPoint
+        description: TBD
+      timestamp:
+        type: string
+        format: date-time
+        description: If not specified, the context server uses time of submission.
+      data:
+        type: object
+        description: Optional event specific information.
+    required: ['eventType', 'objectId', 'subjectId']
+
       
   QueryResult:
     type: object
@@ -419,7 +531,8 @@ definitions:
         description: Query result
         items:
           type: object  
-          
+
+
   OrderByPart:
     type: object
     description: A single part of a orderBy clause
