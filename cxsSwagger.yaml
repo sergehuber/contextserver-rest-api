@@ -197,39 +197,6 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-#
-# TODO : Decide whether we should keep this endpoint because if it doesn't
-# specify a query language its usefulness is questionable.
-#
-  /query:
-    post:
-      summary: Perform a query
-      description: Execute a query against specified objects in the Context Server
-      parameters:
-        - name: queryString
-          in: body
-          description: an query expressed in a implementation specific query language. An SQL-like example could look like this "SELECT profileId as _id,firstName,e.purchaseDate as date FROM profiles AS p,events AS e WHERE p.profileId=e.profileId and e.purchaseDate > today - 30 days"
-          schema:
-            type: string
-          required: true
-      tags:
-        - Query
-      responses:
-        200:
-          description: A query result
-          schema:
-            $ref: '#/definitions/QueryResult'
-          examples:
-            application/json:
-              {
-                total: 2000, offset: 0, pageSize: 2,
-                hits: [{_id: 1, firstName: 'Serge', date:'2016-05-03T14:30:20'}, {_id: 2, firstName: 'Jan', date:'2016-05-03T13:43:55'}]
-              }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
 ################################################################################
 #                                   Parameters                                 #
 ################################################################################
@@ -252,23 +219,6 @@ parameters:
     description: Value of the property specified in "propName" to make against. Implementations might allow values to include wildcards or regular expressions
     required: true
     type: string
-  query:
-    name: query
-    in: query
-    description: |
-      Valid object-specific query string. The elements of the query are boolean returning functions that may be combined using AND,OR,NOT operators as well as parentheses to group and clarify operator precedence. Functions may take multiple parameter and context server implementations must implement a minimal standardized set of functions defined here, but may also provide additional functions that are not specified in this document.
-      A complex example would look like this
-      greaterThan('age',30) AND lowerThan('age',50) AND closeTo('town', 'geneva')
-      Here below are the required built-in function that implementations must provide
-      equals(propertyName,value) / eq / =
-      greaterThan(propertyName,value) / gt / >
-      greaterOrEqual(propertyName,value) / gte / >=
-      lessThan(propertyName,value) / lt
-      lessOrEqual(propertyName,value) / lte
-      TO BE COMPLETED
-    required: false
-    type: string
-    format: conditionExpression
   properties:
     name: properties
     in: query
