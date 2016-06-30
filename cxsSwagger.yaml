@@ -152,7 +152,7 @@ paths:
       parameters:
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/offset'
-        - $ref: '#/parameters/complexQueryBody'
+        - $ref: '#/parameters/queryBody'
       tags:
         - Profile
         - Query
@@ -161,9 +161,9 @@ paths:
           description: An array of profiles
           schema:
            $ref: '#/definitions/ProfileResult'
-          examples: 
+          examples:
             application/json:
-              { 
+              {
                 total: 2000, offset: 0, pageSize: 2,
                 hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
               }
@@ -176,55 +176,22 @@ paths:
     get:
       summary: Get explicit profile
       description: Access a specific profile.
-      parameters: 
+      parameters:
         - name: profileId
           in: path
           description: Specify the profiles unique ID
           type: string
           required: true
-      tags:  
+      tags:
         - Profile
       responses:
         200:
           description: A single profile
           schema:
               $ref: '#/definitions/Profile'
-          examples: 
-            application/json:
-              { _id: 1, firstName: 'Novak'}
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-     
-#
-# TODO : Decide whether we should keep this endpoint because if it doesn't 
-# specify a query language its usefulness is questionable.
-#
-  /query:
-    post:
-      summary: Perform a query
-      description: Execute a query against specified objects in the Context Server
-      parameters:
-        - name: queryString
-          in: body
-          description: an query expressed in a implementation specific query language. An SQL-like example could look like this "SELECT profileId as _id,firstName,e.purchaseDate as date FROM profiles AS p,events AS e WHERE p.profileId=e.profileId and e.purchaseDate > today - 30 days" 
-          schema:
-            type: string
-          required: true
-      tags:
-        - Query
-      responses:
-        200:
-          description: A query result
-          schema:
-            $ref: '#/definitions/QueryResult'
           examples:
             application/json:
-              { 
-                total: 2000, offset: 0, pageSize: 2,
-                hits: [{_id: 1, firstName: 'Serge', date:'2016-05-03T14:30:20'}, {_id: 2, firstName: 'Jan', date:'2016-05-03T13:43:55'}]
-              }
+              { _id: 1, firstName: 'Novak'}
         default:
           description: Unexpected error
           schema:
@@ -252,30 +219,13 @@ parameters:
     description: Value of the property specified in "propName" to make against. Implementations might allow values to include wildcards or regular expressions
     required: true
     type: string
-  query:  
-    name: query
-    in: query
-    description: | 
-      Valid object-specific query string. The elements of the query are boolean returning functions that may be combined using AND,OR,NOT operators as well as parentheses to group and clarify operator precedence. Functions may take multiple parameter and context server implementations must implement a minimal standardized set of functions defined here, but may also provide additional functions that are not specified in this document. 
-      A complex example would look like this
-      greaterThan('age',30) AND lowerThan('age',50) AND closeTo('town', 'geneva')
-      Here below are the required built-in function that implementations must provide
-      equals(propertyName,value) / eq / =
-      greaterThan(propertyName,value) / gt / > 
-      greaterOrEqual(propertyName,value) / gte / >=
-      lessThan(propertyName,value) / lt
-      lessOrEqual(propertyName,value) / lte
-      TO BE COMPLETED
-    required: false
-    type: string
-    format: conditionExpression
-  properties: 
+  properties:
     name: properties
     in: query
     description: Specify the properties to be returned, use * to return all. If not specified, identifier property will be returned (hmm. should we force developers to specify properties?)
     required: false
     type: array
-    items: 
+    items:
       type: string
   pageSize:
     name: pageSize
@@ -290,28 +240,28 @@ parameters:
     description: Offset in number of items in query result set
     required: false
     type: number
-    format: long 
+    format: long
   orderBy:
     name: orderBy
     in: query
     description: Specify property to order query results by
     required: false
     type: string
-    format: propertyName ASC | DESC 
-  complexQueryBody:
-    name: body
+    format: propertyName ASC | DESC
+  queryBody:
+    name: query
     in: body
-    description: Specify property to order query results by
+    description: Specifies the query to filter items by
     required: false
     schema:
-      $ref: '#/definitions/ComplexQuery'
+      $ref: '#/definitions/Query'
   reverseOrder:
     name: reverse
     in: query
     description: If true, the query results will be in reverse order
     required: false
     type: boolean
-    format: truthy, any value apart from false or 0 will 
+    format: truthy, any value apart from false or 0 will
       be true
 
 ################################################################################
@@ -319,62 +269,120 @@ parameters:
 ################################################################################
 definitions:
 
-  ComplexQuery:
+  QueryClause:
     type: object
+    description: A query clause
     allOf:
-      # TODO:
-      - $ref: '#/definitions/ProfileResult'
-      #    - $ref: '#/definitions/Query'
-      #    - $ref: '#/definitions/Properties'
-      #    - $ref: '#/definitions/OrderBy'
+      - $ref: '#/definitions/Operation'
+      - type: object
+        properties:
+          op:
+            type: string
+          args:
+            type: array
+            items:
+              $ref: '#/definitions/QueryClause'
 
- 
+  IntLiteral:
+    type: integer
+    format: int64
+
+  DoubleLiteral:
+    type: number
+    format: double
+
+  BooleanLiteral:
+    type: boolean
+
+  StringLiteral:
+    type: string
+
+  DateLiteral:
+    type: string
+    format: 'date-time'
+
+  OperationArgLiteral:
+    type: object
+    description: A literal value to be used in QueryClauses
+    allOf:
+      - $ref: '#/definitions/IntLiteral'
+      - $ref: '#/definitions/DoubleLiteral'
+      - $ref: '#/definitions/BooleanLiteral'
+      - $ref: '#/definitions/StringLiteral'
+      - $ref: '#/definitions/DateLiteral'
+
+  OperationArgs:
+    type: object
+    description: Possible values for Operation args property
+    allOf:
+      - $ref: '#/definitions/OperationArgLiteral'
+      - $ref: '#/definitions/Operation'
+
+  Operation:
+    type: object
+    properties:
+      op:
+        type : string
+      args:
+        type : array
+        items :
+          $ref: '#/definitions/OperationArgs'
+
+
   Query:
     type: object
-    description: A container for query functions
-    properties: 
-      function:
-        type: object
-        description: '<function>: [args]'
+    description: A container for query projections, operations, arguments and order by clauses
+    properties:
+      properties:
+        type: array
+        description : a list of property names to that will be return in the query result.
+        items:
+          type: string
+      op:
+        type: string
+        description: the function name
+      args:
+        type : array
+        description: arguments for the function, which might include sub operations
+        items:
+          $ref: '#/definitions/Operation'
       orderBy:
-        $ref: '#/definitions/OrderByPart'
+        type: array
+        items :
+          $ref: '#/definitions/OrderByPart'
 
-
-# example 1
-#       {  
+# example 1 - short form but non JSON compliant
+#       {
 #        and:[{
-#         geoDistance[ {
+#         geoDistance : [ {
 #            geoLocation : 'x',
 #            distance : 'y', }]
 #           },
-#         {  
+#         {
 #         in:[1,2,3]
 #         }]
-#       } 
+#       }
 
-#    example2 -verbose:
+# example 2 - more verbose but more JSON compliant
 #      application/json:
-#       {  
-#        function:'and',
-#        arguments:[  
-#        {
-#          function:'geoDistance',
-#          arguments: [ {
-#            geoLocation : '',
-#            distance : '', 
-#            function : ''
-#          }]
-#        },
-#        {  
-#        function: 'in',
-#        arguments:[1,2,3]
+#       {
+#          properties: [ 'firstName', 'lastName' ]
+#          op:'and',
+#          args:[
+#            {
+#              op:'geoDistance',
+#              args: [ 'geoLocation', 10 ]
+#            },
+#            {
+#              op: 'in',
+#              args:['views', 1,2,3]
+#            }
+#          ],
+#          orderBy : [
+#            { propertyName: 'firstName' order: 'DESC'} ,
+#            { propertyName: 'lastName' }
+#          ]
 #      }
-#     ]
-#    } 
-
-
-
-
 
 
   ProfileResult:
