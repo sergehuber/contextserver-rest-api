@@ -81,12 +81,44 @@ paths:
     get:
       summary: Event retrieval by query
       description: |
-        This api enables retrieval of events - if the query object is omitted - all events will be included in the result using default values for pageSize, offset and properties 
+        This api enables retrieval of events using simple query parameters 
       parameters:
         - $ref: '#/parameters/properties'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/offset'
-#        - $ref: '#/parameters/orderBy'
+#        - $ref: '#/parameters/eventTypes'
+#        - $ref: '#/parameters/subjectId'
+#        - $ref: '#/parameters/geoArea'
+#        - $ref: '#/parameters/fromTime'
+#        - $ref: '#/parameters/toTime'
+        - $ref: '#/parameters/orderBy'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /events/_query:
+    post:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events through complex queries 
+      parameters:
         - name: query
           description: Event query definition
           in: body
@@ -338,14 +370,14 @@ definitions:
         description : a list of property names to that will be return in the query result.
         items:
           type: string
-      op:
-        type: string
-        description: the function name
-      args:
-        type : array
-        description: arguments for the function, which might include sub operations
-        items:
-          $ref: '#/definitions/Operation'
+      pageSize:
+        type: integer
+        description: number of items per page
+      offset:
+        type: integer
+        description: Return result in offset number of items from first item
+      statement:
+        $ref: '#/definitions/Operation'
       orderBy:
         type: array
         items :
