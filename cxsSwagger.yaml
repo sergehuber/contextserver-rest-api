@@ -145,28 +145,65 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
+    post:
+      summary: Create a new profile
+      description: This method is used to create a new profile with a server-generated ID.
+      parameters:
+        - $ref: '#/parameters/profileBody'
+      tags:
+        - Profile
+      responses:
+        201:
+          description: Result of profile creation
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /profiles/queries:
     post:
       summary: Profile retrieval by complex query
       description: |
         Access all profiles matching a complex query
       parameters:
         - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/offset'
         - $ref: '#/parameters/queryBody'
       tags:
         - Profile
         - Query
       responses:
-        200:
-          description: An array of profiles
+        201:
+          description: the result of the query creation, with the first page of results if the pageSize parameter was
+           specified by the user
           schema:
-           $ref: '#/definitions/ProfileResult'
+            $ref: '#/definitions/ProfileResult'
+          headers:
+            Location:
+              description: URL of the newly created query
+              type: string
           examples:
             application/json:
               {
                 total: 2000, offset: 0, pageSize: 2,
                 hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
               }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /profiles/queries/{queryId}:
+    get:
+      summary: Retrieve the query and the results
+      description: This request returns the details of the query as well as the results of the query
+      parameters:
+        - name: queryId
+          in: path
+          description: Identifier of the query
+          type: string
+          required: true
+      responses:
         default:
           description: Unexpected error
           schema:
@@ -196,6 +233,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
 
 ################################################################################
 #                                   Parameters                                 #
@@ -261,8 +299,13 @@ parameters:
     description: If true, the query results will be in reverse order
     required: false
     type: boolean
-    format: truthy, any value apart from false or 0 will
-      be true
+    format: truthy, any value apart from false or 0 will be true
+  profileBody:
+    name : profile
+    in: body
+    description : Represents the contents of a profile in the body of a request
+    schema:
+      $ref: '#/definitions/Profile'
 
 ################################################################################
 #                                 Definitions                                  #
