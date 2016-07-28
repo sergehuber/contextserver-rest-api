@@ -13,7 +13,7 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /event/collect/{trackingId}:
+  /events/collect/{trackingId}:
     post:
       summary: An endpoint for data collection
       description: |
@@ -37,7 +37,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /event/type:
+  /events/type:
     get:
       summary: An endpoint returning all available event types
       description: |
@@ -112,6 +112,25 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+    post:
+      summary: Creates a new event
+      description: This method is used to create a new event. This will return the created event while the collect endpoint will not.
+      parameters:
+        - name: payload
+          description: An Event object
+          in: body
+          schema:
+            $ref: '#/definitions/CreateEvent'
+      tags:
+        - Event
+      responses:
+        201:
+          description: Result of event creation TODO-define the response object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'    
+
 
   /events/_query:
     post:
@@ -179,7 +198,7 @@ paths:
             $ref: '#/definitions/Error'
 
     post:
-      summary: Create a new profile
+      summary: Creates a new profile
       description: This method is used to create a new profile with a server-generated ID.
       parameters:
         - $ref: '#/parameters/profileBody'
@@ -193,49 +212,32 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /profiles/queries:
+  /profiles/_query:
     post:
-      summary: Profile retrieval by complex query
+      summary: Profile retrieval by query
       description: |
-        Access all profiles matching a complex query
+        This api enables retrieval of profiles through complex query
       parameters:
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/queryBody'
+        - name: query
+          description: Profile query definition
+          in: body
+          schema:
+            $ref: '#/definitions/Query'
       tags:
         - Profile
         - Query
       responses:
-        201:
-          description: the result of the query creation, with the first page of results if the pageSize parameter was
-           specified by the user
+        200:
+          description: An array of prfiles
           schema:
-            $ref: '#/definitions/ProfileResult'
-          headers:
-            Location:
-              description: URL of the newly created query
-              type: string
-          examples:
+           $ref: '#/definitions/ProfileResult'
+          examples: 
             application/json:
-              {
+              { 
                 total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
                 hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
               }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-  /profiles/queries/{queryId}:
-    get:
-      summary: Retrieve the query and the results
-      description: This request returns the details of the query as well as the results of the query
-      parameters:
-        - name: queryId
-          in: path
-          description: Identifier of the query
-          type: string
-          required: true
-      responses:
         default:
           description: Unexpected error
           schema:
@@ -419,12 +421,17 @@ definitions:
       offset:
         type: integer
         description: Return result in offset number of items from first item
-      statement:
+      filter:
         $ref: '#/definitions/Operation'
+      aggregations:
+        type: object
+        description: defines what data aggregation to return (optional)
+        example: TODO-reuse the concept of query function definitions?
       orderBy:
         type: array
         items :
           $ref: '#/definitions/OrderByPart'
+
 
 # example 1 - short form but non JSON compliant
 #       {
