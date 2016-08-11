@@ -3,20 +3,21 @@
 StringLiteral   ::= '"' [^"]* '"' | "'" [^']* "'"
 NumberLiteral   ::= [0-9]+ ( '.' [0-9]+)
 FunctionName    ::= [a-zA-Z][0-9a-zA-Z]*
-FunctionArg     ::= ( StringLiteral | NumberLiteral )
-FunctionArgs    ::= FunctionArg? ( ',' FunctionArg )*
+FunctionArg     ::= (FunctionCall | StringLiteral | NumberLiteral)
+FunctionArgs    ::= FunctionArg? ( ',' FunctionArg )* /* Too weak definition? */
 FunctionCall    ::= FunctionName '(' FunctionArgs ')'
-Clause          ::= ( 'NOT' FunctionCall | FunctionCall 'AND' FunctionCall | FunctionCall 'OR' FunctionCall )
-ParenClause     ::= '(' Clause ')'
-Query           ::= Clause ( Clause | ParenClause )*
+Query           ::= FunctionCall
 
 
 /*
-greaterThan('age',30) AND lowerThan('age',50) AND closeTo('town', 'geneva')
+and(and(greaterThan('age',30), lowerThan('age',50)),closeTo('town', 'geneva'))
       Here below are the required built-in function that implementations must provide
       equals(propertyName,value) / eq / =
       greaterThan(propertyName,value) / gt / >
       greaterOrEqual(propertyName,value) / gte / >=
       lessThan(propertyName,value) / lt
       lessOrEqual(propertyName,value) / lte
+      or(functionCall, functionCall) / OR / |
+      and(functionCall, functionCall) / AND / &
+      not(functionCall) / NOT / !
 */
