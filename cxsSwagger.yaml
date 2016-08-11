@@ -13,7 +13,7 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /events/collect/{trackingId}:
+  /events/_collect/{trackingId}:
     post:
       summary: An endpoint for data collection
       description: |
@@ -37,7 +37,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /events/type:
+  /event-type:
     get:
       summary: An endpoint returning all available event types
       description: |
