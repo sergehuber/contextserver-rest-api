@@ -6,7 +6,7 @@ FunctionName    ::= [a-zA-Z][0-9a-zA-Z]*
 FunctionArg     ::= (FunctionCall | StringLiteral | NumberLiteral)
 FunctionArgs    ::= FunctionArg? ( ',' FunctionArg )* /* Too weak definition? */
 FunctionCall    ::= FunctionName '(' FunctionArgs ')'
-Query           ::= FunctionCall
+Filter           ::= FunctionCall
 
 
 /*
