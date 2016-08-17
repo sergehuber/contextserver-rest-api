@@ -198,15 +198,22 @@ paths:
             $ref: '#/definitions/Error'
 
     post:
-      summary: Creates a new profile
-      description: This method is used to create a new profile with a server-generated ID.
+      summary: Creates a new profile.
+      description: This method is used to create a new profile with a server-generated ID, if an ID is specified it will be ignored.
       parameters:
         - $ref: '#/parameters/profileBody'
       tags:
         - Profile
       responses:
         201:
-          description: Result of profile creation
+          description: Profile creation returns the created profile.
+          schema:
+           $ref: '#/definitions/Profile'
+          examples: 
+            application/json:
+              { 
+                _id: 1, firstName: 'Novak'
+              }
         default:
           description: Unexpected error
           schema:
@@ -228,7 +235,7 @@ paths:
         - Query
       responses:
         200:
-          description: An array of prfiles
+          description: An array of profiles
           schema:
            $ref: '#/definitions/ProfileResult'
           examples: 
@@ -236,7 +243,9 @@ paths:
               { 
                 total: 2000, offset: 0, pageSize: 2,
                 orderBy: [{ propertyName: "firstName", order:"DESC" }], 
-                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}],
+                # should we have this aggregates complexity?
+                aggregates: [{name : "averageAge", value: 20.54}, {name : "birthYearProfileCount", value: {2010 : 10, 2011 : 12}}]
               }
         default:
           description: Unexpected error
@@ -320,13 +329,13 @@ parameters:
     required: false
     type: string
     format: propertyName ASC | DESC
-  queryBody:
-    name: query
-    in: body
-    description: Specifies the query to filter items by
-    required: false
-    schema:
-      $ref: '#/definitions/Query'
+#  queryBody:
+#    name: query
+#    in: body
+#    description: Specifies the query to filter items by
+#    required: false
+#    schema:
+#      $ref: '#/definitions/Query'
   reverseOrder:
     name: reverse
     in: query
@@ -334,12 +343,13 @@ parameters:
     required: false
     type: boolean
     format: truthy, any value apart from false or 0 will be true
+
   profileBody:
     name : profile
     in: body
-    description : Represents the contents of a profile in the body of a request
+    description : Represents the contents of a profile in the body of a request, i.e. with no ID
     schema:
-      $ref: '#/definitions/Profile'
+      type: object
 
 ################################################################################
 #                                 Definitions                                  #
@@ -478,8 +488,7 @@ definitions:
             description: Query result
             items:
               $ref: '#/definitions/Profile'
-  
-  
+
   Profile:
     type: object
     properties:
@@ -488,9 +497,7 @@ definitions:
         format: uuid
     additionalProperties:
       type: object
-  
-  
-            
+
   EventResult:
     type: object
     allOf:
@@ -616,12 +623,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/OrderByPart'
-      hits:
+      aggregates:
         type: array
-        description: Query result
         items:
-          type: object  
-
+          $ref: '#/definitions/AggregatesPart'
 
   OrderByPart:
     type: object
@@ -634,6 +639,17 @@ definitions:
         type: string
         format: DESC
         description : This parameter is optional, if not specified it will default to ASC
+
+  AggregatesPart:
+    type: object
+    description: Result of an aggregation executed by a query.
+    properties: 
+      name:
+        type: string
+        description : Name of the aggregation as specified in the query.
+      value: 
+        type: object
+        description : Result of the aggregation function.
 
   Error:
     type: object
