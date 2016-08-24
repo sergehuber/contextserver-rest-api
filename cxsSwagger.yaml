@@ -199,7 +199,7 @@ paths:
 
     post:
       summary: Creates a new profile.
-      description: This method is used to create a new profile with a server-generated ID, if an ID is specified it will be ignored.
+      description: This method is used to create a new profile coming from an external source, with an external source unique name and an external profile identifier. The context server will generate or resolve from a merge a unified profile identifier.
       parameters:
         - $ref: '#/parameters/profileBody'
       tags:
