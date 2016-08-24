@@ -251,7 +251,8 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+            
+            
   /profiles/{profileId}:
     get:
       summary: Get explicit profile
@@ -360,7 +361,7 @@ definitions:
     type: object
     description: A query clause
     allOf:
-      - $ref: '#/definitions/Operation'
+      - $ref: '#/definitions/FunctionCall'
       - type: object
         properties:
           op:
@@ -387,33 +388,26 @@ definitions:
   DateLiteral:
     type: string
     format: 'date-time'
-
-  OperationArgLiteral:
+  
+  FunctionLiteral:
     type: object
-    description: A literal value to be used in QueryClauses
-    allOf:
-      - $ref: '#/definitions/IntLiteral'
-      - $ref: '#/definitions/DoubleLiteral'
-      - $ref: '#/definitions/BooleanLiteral'
-      - $ref: '#/definitions/StringLiteral'
-      - $ref: '#/definitions/DateLiteral'
+    description: A function call.
 
-  OperationArgs:
-    type: object
-    description: Possible values for Operation args property
-    allOf:
-      - $ref: '#/definitions/OperationArgLiteral'
-      - $ref: '#/definitions/Operation'
-
-  Operation:
+# How to specify that it will take any of the possible arguments
+  FunctionCall:
     type: object
     properties:
-      op:
+      function:
         type : string
-      args:
+      arguments:
         type : array
-        items :
-          $ref: '#/definitions/OperationArgs'
+        items : 
+            - $ref: '#/definitions/FunctionLiteral'
+            - $ref: '#/definitions/IntLiteral'
+            - $ref: '#/definitions/DoubleLiteral'
+            - $ref: '#/definitions/BooleanLiteral'
+            - $ref: '#/definitions/StringLiteral'
+            - $ref: '#/definitions/DateLiteral'
 
 
   Query:
@@ -432,7 +426,7 @@ definitions:
         type: integer
         description: Return result in offset number of items from first item
       filter:
-        $ref: '#/definitions/Operation'
+        $ref: '#/definitions/FunctionCall'
       aggregations:
         type: object
         description: defines what data aggregation to return (optional)
@@ -443,38 +437,34 @@ definitions:
           $ref: '#/definitions/OrderByPart'
 
 
-# example 1 - short form but non JSON compliant
-#       {
-#        and:[{
-#         geoDistance : [ {
-#            geoLocation : 'x',
-#            distance : 'y', }]
-#           },
-#         {
-#         in:[1,2,3]
-#         }]
-#       }
+#	{
+#		"properties" : ['firstName', 'lastName']
+#		"filter" : {
+#			"function" : 'and',
+#			"arguments" : [{
+#					"function": "gt",
+#					"arguments": [
+#						{
+#							"function" : 'geoDistance',
+#							"argument" :  ['geoLocation', {l: 43, a: 56}]
+#						},
+#						100 //100 meters
+#					]
+#				}, {
+#					"function" : 'in',
+#					"arguments" : ['views', 1, 2, 3]
+#				}
+#			]
+#		},
+#		"orderBy" : [{
+#				"propertyName" : 'firstName' "order" : 'DESC'
+#			}, {
+#				"propertyName" : 'lastName'
+#			}
+#		]
+#	}
 
-# example 2 - more verbose but more JSON compliant
-#      application/json:
-#       {
-#          properties: [ 'firstName', 'lastName' ]
-#          op:'and',
-#          args:[
-#            {
-#              op:'geoDistance',
-#              args: [ 'geoLocation', 10 ]
-#            },
-#            {
-#              op: 'in',
-#              args:['views', 1,2,3]
-#            }
-#          ],
-#          orderBy : [
-#            { propertyName: 'firstName' order: 'DESC'} ,
-#            { propertyName: 'lastName' }
-#          ]
-#      }
+
 
 
   ProfileResult:
