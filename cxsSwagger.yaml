@@ -13,12 +13,13 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /events/_collect/{trackingId}:
+  /repo/{repositoryId}/tracker/{trackingId}/_collect:
     post:
       summary: An endpoint for data collection
       description: |
         Collect single or batched events from any client. This endpoint doesn't require any authentication but requires a valid trackingId. 
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - $ref: '#/parameters/trackingId'
         - name: payload
           description: An array of Event objects
@@ -37,12 +38,108 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /event-type:
+
+  /repo/{repositoryId}/tracker/{trackingId}/_register:
+    post:
+      summary: Creates a new event
+      description: This method is used to create a new event. This will return the created event while the collect endpoint will not. Compared to _collect it will only support single objects and be more verbose, and typically require some authentication
+      parameters:
+        - $ref: '#/parameters/repositoryId'
+        - $ref: '#/parameters/trackingId'
+        - name: payload
+          description: An Event object
+          in: body
+          schema:
+            $ref: '#/definitions/CreateEvent'
+      tags:
+        - Event
+      responses:
+        201:
+          description: Result of event creation TODO-define the response object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'    
+
+
+  /repo/{repositoryId}/events:
+    get:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events using simple query parameters 
+      parameters:
+        - $ref: '#/parameters/repositoryId'
+        - $ref: '#/parameters/properties'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+#        - $ref: '#/parameters/eventTypes'
+#        - $ref: '#/parameters/subjectId'
+#        - $ref: '#/parameters/geoArea'
+#        - $ref: '#/parameters/fromTime'
+#        - $ref: '#/parameters/toTime'
+        - $ref: '#/parameters/orderBy'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+
+  /repo/{repositoryId}/events/_query:
+    post:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events through complex queries 
+      parameters:
+        - $ref: '#/parameters/repositoryId'
+        - name: query
+          description: Event query definition
+          in: body
+          schema:
+            $ref: '#/definitions/Query'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /repo/{repositoryId}/event-type:
     get:
       summary: An endpoint returning all available event types
       description: |
         Collect of event types. 
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/offset'
         - $ref: '#/parameters/orderBy'
@@ -77,93 +174,10 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /events:
-    get:
-      summary: Event retrieval by query
-      description: |
-        This api enables retrieval of events using simple query parameters 
-      parameters:
-        - $ref: '#/parameters/properties'
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/offset'
-#        - $ref: '#/parameters/eventTypes'
-#        - $ref: '#/parameters/subjectId'
-#        - $ref: '#/parameters/geoArea'
-#        - $ref: '#/parameters/fromTime'
-#        - $ref: '#/parameters/toTime'
-        - $ref: '#/parameters/orderBy'
-      tags:
-        - Event
-        - Query
-      responses:
-        200:
-          description: An array of events
-          schema:
-           $ref: '#/definitions/EventResult'
-          examples: 
-            application/json:
-              { 
-                total: 2000, offset: 0, pageSize: 2,
-                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
-                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
-              }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-    post:
-      summary: Creates a new event
-      description: This method is used to create a new event. This will return the created event while the collect endpoint will not.
-      parameters:
-        - name: payload
-          description: An Event object
-          in: body
-          schema:
-            $ref: '#/definitions/CreateEvent'
-      tags:
-        - Event
-      responses:
-        201:
-          description: Result of event creation TODO-define the response object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'    
 
 
-  /events/_query:
-    post:
-      summary: Event retrieval by query
-      description: |
-        This api enables retrieval of events through complex queries 
-      parameters:
-        - name: query
-          description: Event query definition
-          in: body
-          schema:
-            $ref: '#/definitions/Query'
-      tags:
-        - Event
-        - Query
-      responses:
-        200:
-          description: An array of events
-          schema:
-           $ref: '#/definitions/EventResult'
-          examples: 
-            application/json:
-              { 
-                total: 2000, offset: 0, pageSize: 2,
-                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
-                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
-              }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
 
-  /profiles:
+  /repo/{repositoryId}/profiles:
     get:
       summary: Profile retrieval by simple query
       description: |
@@ -171,6 +185,7 @@ paths:
         on matching a single property to a value. The resulsts will automatically be ordered by natural ascending order of the specified property. This endpoint could for example be used to implement
         auto-completion mechanisms
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - $ref: '#/parameters/simpleQueryPropertyName'
         - $ref: '#/parameters/simpleQueryPropertyValue'
         - $ref: '#/parameters/properties'
@@ -197,10 +212,15 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+# WG3 suggest dropping create profile, and rather use an import API for this specific use case.
+# As such profiles are never manually created, but rise from events of a given tracker rules and merges
+# Editing is however a natural feature
+
     post:
       summary: Creates a new profile.
       description: This method is used to create a new profile coming from an external source, with an external source unique name and an external profile identifier. The context server will generate or resolve from a merge a unified profile identifier.
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - $ref: '#/parameters/profileBody'
       tags:
         - Profile
@@ -219,12 +239,13 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /profiles/_query:
+  /repo/{repositoryId}/profiles/_query:
     post:
       summary: Profile retrieval by query
       description: |
         This api enables retrieval of profiles through complex query
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - name: query
           description: Profile query definition
           in: body
@@ -253,11 +274,12 @@ paths:
             $ref: '#/definitions/Error'
             
             
-  /profiles/{profileId}:
+  /repo/{repositoryId}/profiles/{profileId}:
     get:
       summary: Get explicit profile
       description: Access a specific profile.
       parameters:
+        - $ref: '#/parameters/repositoryId'
         - name: profileId
           in: path
           description: Specify the profiles unique ID
@@ -283,10 +305,16 @@ paths:
 #                                   Parameters                                 #
 ################################################################################
 parameters:
+  repositoryId:
+    name: repositoryId
+    in: path
+    description: In order to provide multitenancy, cxs servers should implement repositories. If the implementation does not support repositories, the name default can be used i.e. /v1/repo/default/. Repository ID's are obtained from the context server by creating new repositories. (Alternative we could use "Tenant")
+    required: true
+    type: string
   trackingId:
     name: trackingId
     in: path
-    description: The unique identifier of the tracker defined in your repository.
+    description: Tracking ID's are obtained from the context server by creating new trackers. Trackers are unique per repository (in a multitentant setup). A tracker will have a unique human readale name i.e. "crm" or "website".
     required: true
     type: string
   simpleQueryPropertyName:
