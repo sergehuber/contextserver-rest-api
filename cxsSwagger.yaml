@@ -13,22 +13,23 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /events/_collect/{trackingId}:
+  /scopes/{scopeId}/events/_collect:
     post:
       summary: An endpoint for data collection
       description: |
         Collect single or batched events from any client. This endpoint doesn't require any authentication but requires a valid trackingId. 
       parameters:
-        - $ref: '#/parameters/trackingId'
+        - $ref: '#/parameters/scopeId'
         - name: payload
           description: An array of Event objects
           in: body
           schema:
             type: array
             items:
-              $ref: '#/definitions/CreateEvent'
+              $ref: '#/definitions/BatchEvents'
       tags:
         - Event
+        - Batch
       responses:
         204:
           description: No response returned in order to optimize performance
@@ -37,12 +38,101 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /event-type:
+
+  /scopes/{scopeId}/events:
+    post:
+      summary: Creates a new event
+      description: |
+        This method is used to create a new event. This will return the created event while the collect endpoint will
+        not. Compared to _collect it will only support single objects and be more verbose, and typically require
+        some authentication.
+        # Why do we need this specifically?
+      parameters:
+        - $ref: '#/parameters/scopeId'
+        - name: payload
+          description: An Event object
+          in: body
+          schema:
+            $ref: '#/definitions/CreateEvent'
+      tags:
+        - Event
+      responses:
+        201:
+          description: Result of event creation TODO-define the response object
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events using simple query parameters 
+      parameters:
+        - $ref: '#/parameters/tracker'
+        - $ref: '#/parameters/properties'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/offset'
+        - $ref: '#/parameters/orderBy'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /scopes/{scopeId}/events/_query:
+    post:
+      summary: Event retrieval by query
+      description: |
+        This api enables retrieval of events through complex queries 
+      parameters:
+        - $ref: '#/parameters/scopeId'
+        - name: query
+          description: Event query definition
+          in: body
+          schema:
+            $ref: '#/definitions/Query'
+      tags:
+        - Event
+        - Query
+      responses:
+        200:
+          description: An array of events
+          schema:
+           $ref: '#/definitions/EventResult'
+          examples: 
+            application/json:
+              { 
+                total: 2000, offset: 0, pageSize: 2,
+                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
+                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
+              }
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  # Presumably, there will be other type of types than events
+  /scopes/{scopeId}/types/events:
     get:
       summary: An endpoint returning all available event types
       description: |
-        Collect of event types. 
+        All known event types to this context server
       parameters:
+        - $ref: '#/parameters/scopeId'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/offset'
         - $ref: '#/parameters/orderBy'
@@ -77,93 +167,10 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /events:
-    get:
-      summary: Event retrieval by query
-      description: |
-        This api enables retrieval of events using simple query parameters 
-      parameters:
-        - $ref: '#/parameters/properties'
-        - $ref: '#/parameters/pageSize'
-        - $ref: '#/parameters/offset'
-#        - $ref: '#/parameters/eventTypes'
-#        - $ref: '#/parameters/subjectId'
-#        - $ref: '#/parameters/geoArea'
-#        - $ref: '#/parameters/fromTime'
-#        - $ref: '#/parameters/toTime'
-        - $ref: '#/parameters/orderBy'
-      tags:
-        - Event
-        - Query
-      responses:
-        200:
-          description: An array of events
-          schema:
-           $ref: '#/definitions/EventResult'
-          examples: 
-            application/json:
-              { 
-                total: 2000, offset: 0, pageSize: 2,
-                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
-                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
-              }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-
-    post:
-      summary: Creates a new event
-      description: This method is used to create a new event. This will return the created event while the collect endpoint will not.
-      parameters:
-        - name: payload
-          description: An Event object
-          in: body
-          schema:
-            $ref: '#/definitions/CreateEvent'
-      tags:
-        - Event
-      responses:
-        201:
-          description: Result of event creation TODO-define the response object
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'    
 
 
-  /events/_query:
-    post:
-      summary: Event retrieval by query
-      description: |
-        This api enables retrieval of events through complex queries 
-      parameters:
-        - name: query
-          description: Event query definition
-          in: body
-          schema:
-            $ref: '#/definitions/Query'
-      tags:
-        - Event
-        - Query
-      responses:
-        200:
-          description: An array of events
-          schema:
-           $ref: '#/definitions/EventResult'
-          examples: 
-            application/json:
-              { 
-                total: 2000, offset: 0, pageSize: 2,
-                orderBy: [{ propertyName: "firstName", order:"DESC" }], 
-                hits: [{_id: 1, firstName: 'Novak'}, {_id: 2, firstName: 'Grigor'}]
-              }
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
 
-  /profiles:
+  /scopes/{scopeId}/profiles:
     get:
       summary: Profile retrieval by simple query
       description: |
@@ -171,6 +178,7 @@ paths:
         on matching a single property to a value. The resulsts will automatically be ordered by natural ascending order of the specified property. This endpoint could for example be used to implement
         auto-completion mechanisms
       parameters:
+        - $ref: '#/parameters/scopeId'
         - $ref: '#/parameters/simpleQueryPropertyName'
         - $ref: '#/parameters/simpleQueryPropertyValue'
         - $ref: '#/parameters/properties'
@@ -197,10 +205,15 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+# WG3 suggest dropping create profile, and rather use an import API for this specific use case.
+# As such profiles are never manually created, but rise from events of a given tracker rules and merges
+# Editing is however a natural feature
+
     post:
       summary: Creates a new profile.
       description: This method is used to create a new profile coming from an external source, with an external source unique name and an external profile identifier. The context server will generate or resolve from a merge a unified profile identifier.
       parameters:
+        - $ref: '#/parameters/scopeId'
         - $ref: '#/parameters/profileBody'
       tags:
         - Profile
@@ -219,12 +232,13 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /profiles/_query:
+  /scopes/{scopeId}/profiles/_query:
     post:
       summary: Profile retrieval by query
       description: |
         This api enables retrieval of profiles through complex query
       parameters:
+        - $ref: '#/parameters/scopeId'
         - name: query
           description: Profile query definition
           in: body
@@ -252,12 +266,13 @@ paths:
           schema:
             $ref: '#/definitions/Error'
             
-            
-  /profiles/{profileId}:
+  # to be removed?
+  /scopes/{scopeId}/profiles/{profileId}:
     get:
       summary: Get explicit profile
       description: Access a specific profile.
       parameters:
+        - $ref: '#/parameters/scopeId'
         - name: profileId
           in: path
           description: Specify the profiles unique ID
@@ -283,10 +298,21 @@ paths:
 #                                   Parameters                                 #
 ################################################################################
 parameters:
-  trackingId:
-    name: trackingId
+  scopeId:
+    name: scopeId
     in: path
-    description: The unique identifier of the tracker defined in your repository.
+    description: |
+      In order to provide multitenancy, cxs servers should implement scopes. If the implementation does not support
+      scopes, a default name could be used e.g. /v1/scopes/default/.
+      Scope identifiers are obtained from the context server by creating new scopes. Alternatively, tenant could be
+      used instead of scope for the same idea.
+  tracker:
+    name: tracker
+    in: query
+    description: |
+      Tracking identifiers are obtained from the context server by creating new trackers. Trackers are unique per scope
+      (in a multitentant setup). A tracker will have a unique human readale name i.e. "crm" or "website".
+      This parameter instructs the server to only return events pertaining to the specified tracker.
     required: true
     type: string
   simpleQueryPropertyName:
@@ -298,7 +324,7 @@ parameters:
   simpleQueryPropertyValue:
     name: propValue
     in: query
-    description: Value of the property specified in "propName" to make against. Implementations might allow values to include wildcards or regular expressions
+    description: Value of the property specified in "propName" to match against. Implementations might allow values to include wildcards or regular expressions
     required: true
     type: string
   properties:
@@ -414,9 +440,13 @@ definitions:
     type: object
     description: A container for query projections, operations, arguments and order by clauses
     properties:
+      scope:
+        type: string
+        description: the scope in which the items to be retrieved are located
+        required: true
       properties:
         type: array
-        description : a list of property names to that will be return in the query result.
+        description : a list of property names to that will be returned in the query result.
         items:
           type: string
       pageSize:
@@ -538,6 +568,12 @@ definitions:
     type: object
     properties:
 # Hmm reuse from event definition?
+      scopeId:
+        type: string
+        description: The identifier of the scope the new event occurred in
+      trackerId:
+        type: string
+        description: The identifier of the tracking system (tracker) that issued the event
       eventType: 
         type: string
         description: The type of the current event. Eg. PageView, Click, Hover, Scroll, Bought, MailShot...
@@ -651,3 +687,8 @@ definitions:
         type: string
       fields:
         type: string
+
+  BatchEvents:
+    type: array
+    items:
+      $ref: '#/definitions/CreateEvent'
