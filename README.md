@@ -5,8 +5,9 @@ Repository for the Context Server REST API specification
 
 ## GraphQL schema
 
-The `cxs-schema.graphql` contains a GraphQL schema.
+The `cxs-schema.graphqle` contains a GraphQL schema.
 
 We recommend editing this file with a schema-aware editor. If you're using IntelliJ IDEA you can install this plugin
-to get support for GraphQL : [https://plugins.jetbrains.com/plugin/8097?pr=idea] (https://plugins.jetbrains.com/plugin/8097?pr=idea)
+to get support for GraphQL : [https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/] (https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/)
 
+Looks like we will need the [GraphQL Endpoint language] (https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/issues/15) support for this type of document.
