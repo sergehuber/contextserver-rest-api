@@ -11,3 +11,8 @@ We recommend editing this file with a schema-aware editor. If you're using Intel
 to get support for GraphQL : [https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/] (https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/)
 
 Looks like we will need the [GraphQL Endpoint language] (https://github.com/jimkyndemeyer/js-graphql-intellij-plugin/issues/15) support for this type of document.
+
+Here are some references to the Schema IDL in the GraphQL specification project : 
+
+[GraphQL IDL additions] (https://github.com/facebook/graphql/pull/90)
+[GraphQL-JS Schema Definition Language Parser] (https://github.com/graphql/graphql-js/pull/74)
