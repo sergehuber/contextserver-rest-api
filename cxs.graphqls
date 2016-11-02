@@ -1,0 +1,8 @@
+{
+  "README" : "This is the CXS GraphQL schema",
+    type Character {
+      name: String!
+      appearsIn: [Episode]!
+    }
+  }
+}
