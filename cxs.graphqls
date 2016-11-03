@@ -1,8 +1,28 @@
-{
-  "README" : "This is the CXS GraphQL schema",
-    type Character {
-      name: String!
-      appearsIn: [Episode]!
-    }
+type Event {
+  id: String!
+  type: [EventTypes]!
+}
+
+enum EventType {
+  PAGEVIEW
+  CLICK
+  FORMSUBMIT
+  ETC
+}
+
+query EventById($id: ID!) {
+  event(id: $id) {
+    type
   }
 }
+
+
+type Profile {
+  id: String!
+}
+
+type Context {
+  id: String!
+}
+
+
