@@ -16,6 +16,28 @@ query EventById($id: ID!) {
   }
 }
 
+query Events($id: ID!) {
+  event(id: $id) {
+    type
+  }
+}
+
+mutation createEvent($trackerId: TrackerID!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: Something ) {
+  createEvent(trackerId: $trackerId, type: $eventType) {
+    location
+    timestamp
+    key
+    value
+  }
+}
+
+mutation collectEvent($trackerId: TrackerID!, $eventType: EventType!) {
+  createEvent(episode: $ep, review: $review) {
+    stars
+    commentary
+  }
+}
+
 
 type Profile {
   id: String!
