@@ -1,9 +1,40 @@
+type Views {
+}
+
 type Profile {
   id: String!
 }
 
+type ProfileSegment {
+}
+
+type ProfileList {
+}
+
+type ProfileInterest {
+}
+
+type ProfilePrivacy {
+}
+
 type Context {
   id: String!
+  segments : [Segment]
+}
+
+type Query {
+}
+
+type Predicate {
+}
+
+type Persona {
+}
+
+type Tracker {
+}
+
+type Client {
 }
 
 type Event {
@@ -16,6 +47,12 @@ enum EventType {
   CLICK
   FORMSUBMIT
   ETC
+}
+
+type Rule {
+}
+
+type RuleAction {
 }
 
 query EventById($id: ID!) {
