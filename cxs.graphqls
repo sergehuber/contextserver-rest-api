@@ -1,45 +1,120 @@
-type Views {
+type Scope {
+  id: ID!
 }
 
-type Profile {
-  id: String!
+type Persona {
+  scope : Scope!
 }
 
-type ProfileSegment {
+type Segment {
+  scope: Scope!
 }
 
-type ProfileList {
+type List {
+  scope: Scope!
 }
 
-type ProfileInterest {
+type Interest {
+  scope : Scope!
 }
 
-type ProfilePrivacy {
+interface Profile {
+  id: ID!
+  properties : [KeyValue]
+}
+
+type ClientProfile implements Profile {
+  id: ID!
+  properties : [KeyValue] // defined in the CXS server configuration
+  client : Client
+  masterProfile : MasterProfile
+}
+
+type MasterProfile implements Profile {
+  id: ID!
+  properties : [KeyValue] // defined in the CXS server configuration
+  clientProfiles : [ClientProfile]
+  privacy : Privacy
+}
+
+type Privacy {
+  doNotTrack: Boolean
+  anonymousBrowsing : Boolean
+  propertiesPolicy : [PropertyPolicy]
+}
+
+type PropertyPolicy {
+  propertyKey : String!
+  policyName : String!
+}
+
+type PropertyPermission {
+  permission : String!
+  applicationKey : ApplicationKey
 }
 
 type Context {
-  id: String!
+  id: ID!
   segments : [Segment]
 }
 
 type Query {
+  conditions : [Condition]
 }
 
-type Predicate {
+type Condition {
 }
 
-type Persona {
+type ApplicationKey {
+  client: Client
+  key: ID!
 }
 
-type Tracker {
+interface PropertyDefinition {
+  name : String!
+  description : String
+  type : String
+  identifier : Boolean
+}
+
+type ClientPropertyDefinition {
+  name : String!
+  description : String
+  type : String
+  identifier : Boolean
+  mapping : MasterPropertyDefitinion
+}
+
+type MasterPropertyDefinition {
+  name : String!
+  description : String
+  type : String
+  identifier : Boolean
+}
+
+type PropertyMapping {
+  clientProperty : String! // ex : facebookId, facebookLogin, facebookUsername
+  masterProperty : String! // ex: faceBookId
+  identifier : Boolean
 }
 
 type Client {
+  applicationKeys: [ApplicationKey]
+  identifiers : [IdentifierMapping] // facebookId, twitterId, email
+  description: String!
+  name: String!
+  thirdPartySystem : Boolean
+}
+
+type KeyValue {
+  key: String!
+  value : String
 }
 
 type Event {
-  id: String!
+  id: ID!
   type: [EventTypes]!
+  properties: [KeyValue]
 }
 
 enum EventType {
@@ -67,8 +142,8 @@ query Events($id: ID!) {
   }
 }
 
-mutation createEvent($trackerId: TrackerID!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: Something ) {
-  createEvent(trackerId: $trackerId, type: $eventType) {
+mutation createEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: Something ) {
+  createEvent(applicationKey: $applicationKey, type: $eventType) {
     location
     timestamp
     key
@@ -76,12 +151,13 @@ mutation createEvent($trackerId: TrackerID!, $eventType: EventType!, $timeStamp:
   }
 }
 
-mutation collectEvent($trackerId: TrackerID!, $eventType: EventType!) {
-  createEvent(episode: $ep, review: $review) {
-    stars
-    commentary
+mutation collectEvent($applicationKey: ApplicationKey!, $event : [Event]) {
+  collectEvent(applicationKey: $applicationKey, event: $event) {
   }
 }
 
-
-
+mutation getContext($events: [Event], $queries: [Query], $sessionId : String!) {
+  getContext(events: $events, queries: $Query, sessionId: $sessionId) {
+    
+  }
+}
