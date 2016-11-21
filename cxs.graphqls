@@ -92,6 +92,7 @@ type ApplicationKey {
   client: Client!
   label : String!
   key: ID!
+  permissions: [String] // "createEvent", "createEventTypes", "fullAccess"
 }
 
 type Client {
