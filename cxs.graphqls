@@ -74,7 +74,6 @@ interface PropertyDefinition {
 
 type EventPropertyDefinition {
   name : String!
-  eventType : EventType
   description : String
   type : String
   identifier : Boolean
@@ -85,7 +84,6 @@ type MasterPropertyDefinition {
   description : String
   type : String
   identifier : Boolean
-  mappings : [ClientPropertyDefinition]
 }
 
 type ApplicationKey {
@@ -115,17 +113,38 @@ type KeyValue {
 
 type Event {
   id: ID!
-  type: [EventTypes]!
+  type: [EventType]!
   client: Client!
+  subject: ClientProfile!
+  object: String!
+  location: [GeoPoint]
+  timestamp: DateTime
   properties: [KeyValue]
 }
 
-enum EventType {
-  PAGEVIEW
-  CLICK
-  FORMSUBMIT
-  UPDATEPROFILE
-  ETC
+// schema definition 
+// the union is used to make it possible to define recursive type structures
+union SchemaType = SchemaScalarType | SchemaCompoundType
+
+type SchemaScalarType {
+  name : String!
+  description : String
+  type : String // scalar type
+  identifier : Boolean
+}
+
+type SchemaCompoundType {
+  name : String!
+  description : String
+  types : [SchemaType]
+}
+
+// event types are defined using schema types, see event-analysis.md for examples
+
+type EventType {
+  id: ID! // human-readable, unique, ex: org.oasis-open.cxs.webClient.PageView,org.acmeCrm.cxs.crmClient.ColdCall
+  description: String
+  schema : SchemaCompoundType
 }
 
 query EventById($id: ID!) {
