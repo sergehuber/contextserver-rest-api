@@ -65,11 +65,6 @@ type Query {
 type Condition {
 }
 
-type ApplicationKey {
-  client: Client
-  key: ID!
-}
-
 interface PropertyDefinition {
   name : String!
   description : String
@@ -77,12 +72,12 @@ interface PropertyDefinition {
   identifier : Boolean
 }
 
-type ClientPropertyDefinition {
+type EventPropertyDefinition {
   name : String!
+  eventType : EventType
   description : String
   type : String
   identifier : Boolean
-  mapping : MasterPropertyDefitinion
 }
 
 type MasterPropertyDefinition {
@@ -90,20 +85,26 @@ type MasterPropertyDefinition {
   description : String
   type : String
   identifier : Boolean
+  mappings : [ClientPropertyDefinition]
 }
 
-type PropertyMapping {
-  clientProperty : String! // ex : facebookId, facebookLogin, facebookUsername
-  masterProperty : String! // ex: faceBookId
-  identifier : Boolean
+type ApplicationKey {
+  client: Client!
+  label : String!
+  key: ID!
 }
 
 type Client {
   applicationKeys: [ApplicationKey]
-  identifiers : [IdentifierMapping] // facebookId, twitterId, email
   description: String!
   name: String!
   thirdPartySystem : Boolean
+}
+
+type PropertyValue {
+  key: String!
+  value: String
+  client : Client!
 }
 
 type KeyValue {
@@ -114,6 +115,7 @@ type KeyValue {
 type Event {
   id: ID!
   type: [EventTypes]!
+  client: Client!
   properties: [KeyValue]
 }
 
@@ -121,13 +123,8 @@ enum EventType {
   PAGEVIEW
   CLICK
   FORMSUBMIT
+  UPDATEPROFILE
   ETC
-}
-
-type Rule {
-}
-
-type RuleAction {
 }
 
 query EventById($id: ID!) {
