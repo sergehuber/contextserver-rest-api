@@ -1,4 +1,4 @@
-#Event structure
+#Event structure analysis and examples
 
 This document contains an exploration of different event types and their structure, in order to analyze the requirements for event type definitions.
 
