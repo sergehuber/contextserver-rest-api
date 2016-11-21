@@ -1,5 +1,7 @@
 #Event structure
 
+This document contains an exploration of different event types and their structure, in order to analyze the requirements for event type definitions.
+
 ##Generic event structure
 
 ###Data sent
@@ -24,11 +26,17 @@
 - interests : [String]
 
 ##Generic Form submission event
+
+A generic form may be either a statically or dynamically generated form, so the form fields may vary from one form to another.
+
 ###Data sent
 (generic event properties)
 - formFields : [ { key, value, metadata { identifier, propertyMapping }]
 
 ##Contact request form submission event
+
+A specific form, which will require a custom event type. This event type, if generic enough, could be used by multiple systems that have the notion of contact requests.
+
 ###Data sent
 (generic event properties)
 - email: String!
@@ -36,7 +44,10 @@
 - lastName: String
 - message: String!
 
-##Purchase order event
+##E-commerce order event
+
+In the case of a e-commerce order, the purchased products (cart items) may be very different, and therefore the structure of the items may need to be defined as more or less complex sub-structures. 
+
 ###Data sent
 (generic event properties)
 - cartItems : [{itemId: String, price: Float, count: Integer, label: String}]
