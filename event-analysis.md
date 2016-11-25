@@ -27,7 +27,7 @@ This document contains an exploration of different event types and their structu
 
 ##Generic Form submission event
 
-A generic form may be either a statically or dynamically generated form, so the form fields may vary from one form to another.
+A generic form may be either a statically or dynamically generated form, so the form fields may vary from one form to another. Now that we have defined event types, there shouldn't be a need for a completely generic form event type.
 
 ###Data sent
 (generic event properties)
