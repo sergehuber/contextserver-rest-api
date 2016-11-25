@@ -23,18 +23,28 @@ interface Profile {
   properties : [KeyValue]
 }
 
+// Browser --(structured event)--> Client -> ClientProfile -> MasterProfile
+
 type ClientProfile implements Profile {
   id: ID!
   properties : [KeyValue] // defined in the CXS server configuration
   client : Client
   masterProfile : MasterProfile
+  schema: SchemaCompoundType
+}
+
+type PropertyValue {
+  key: String!
+  value: String
+  clients : [Client]
 }
 
 type MasterProfile implements Profile {
   id: ID!
-  properties : [KeyValue] // defined in the CXS server configuration
+  properties : [PropertyValue] // defined in the CXS server configuration
   clientProfiles : [ClientProfile]
   privacy : Privacy
+  schema: SchemaCompoundType
 }
 
 type Privacy {
@@ -51,11 +61,6 @@ type PropertyPolicy {
 type PropertyPermission {
   permission : String!
   applicationKey : ApplicationKey
-}
-
-type Context {
-  id: ID!
-  segments : [Segment]
 }
 
 type Query {
@@ -131,6 +136,7 @@ type SchemaScalarType {
   description : String
   type : String // scalar type
   identifier : Boolean
+  aliases : [String] // email, e-mail, mail, mél, couriel
 }
 
 type SchemaCompoundType {
@@ -147,24 +153,105 @@ type EventType {
   schema : SchemaCompoundType
 }
 
-query EventById($id: ID!) {
+enum SortOrder {
+  ASC,
+  DESC,
+  UNSPECIFIED
+}
+
+type EventFilter {
+  type : [String]!
+  length : Int
+  sortProperty : String
+  sortOrder : SortOrder
+}
+
+type Context {
+  profile : ClientProfile
+  session : Session
+  filterResults : [FilterResult]
+  events(filter : EventFilter) : [Event]
+}
+
+type Filter {
+  name : String!
+  query : BooleanQuery
+}
+
+type FilterResult {
+  name : String!
+  result : Boolean
+}
+
+// QUERY TYPES
+
+type Query {
+  event(id : String) : Event
+  context(filters : [Filter], profileId: String) : Context
+}
+
+// sample usage of these query types
+
+query eventById($id: ID!) {
   event(id: $id) {
     type
   }
 }
 
-query Events($id: ID!) {
-  event(id: $id) {
-    type
+query completeContext($filters : [Filter], $sessionId : String) {
+  context(filters : $filters, sessionId : $sessionId) {
+    profile
+    session
+    filterResults
   }
 }
 
-mutation createEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: Something ) {
-  createEvent(applicationKey: $applicationKey, type: $eventType) {
-    location
-    timestamp
-    key
-    value
+query smallContext($filters : [Filter], $sessionId : String) {
+  context(filters : $filters, sessionId : $sessionId) {
+    profile
+  }
+}
+
+query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : EventFilter) {
+  context(clientProfileId : $clientProfileId) {
+    events(filter : $eventFilter) {
+      timeStamp
+      object
+      properties(filter: ["productName", "productSKU", "productDescription"]) {
+        key
+        value
+      }
+    }
+    profile {
+      properties(filter : "email") {
+        value
+      }
+    }
+  }
+}
+
+// MUTATION TYPES
+
+type Mutation {
+  createEvent(applicationKey: ApplicationKey!, type: EventType!, timeStamp : DateTime, location: GeoPoint, properties : [KeyValue]) : Event
+  getContext(events: [Event], filters : [Filter], sessionId: String) : Context
+}
+
+// Sample usage of the above mutation type
+
+mutation minimalCreateEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: [KeyValue] ) {
+  createEvent(applicationKey: $applicationKey, type: $eventType, timeStamp : $timeStamp, location: $location, properties : $data) {
+  }
+}
+
+mutation detailedCreateEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: [KeyValue] ) {
+  createEvent(applicationKey: $applicationKey, type: $eventType, timeStamp : $timeStamp, location: $location, properties : $data) {
+    id
+    type
+    client
+    subject
+    object
+    properties
   }
 }
 
@@ -175,6 +262,7 @@ mutation collectEvent($applicationKey: ApplicationKey!, $event : [Event]) {
 
 mutation getContext($events: [Event], $queries: [Query], $sessionId : String!) {
   getContext(events: $events, queries: $Query, sessionId: $sessionId) {
-    
+    profile
+    session
   }
 }
