@@ -63,7 +63,7 @@ type PropertyPermission {
   applicationKey : ApplicationKey
 }
 
-type Query {
+type ContextQuery {
   conditions : [Condition]
 }
 
@@ -260,8 +260,8 @@ mutation collectEvent($applicationKey: ApplicationKey!, $event : [Event]) {
   }
 }
 
-mutation getContext($events: [Event], $queries: [Query], $sessionId : String!) {
-  getContext(events: $events, queries: $Query, sessionId: $sessionId) {
+mutation getContext($events: [Event], $queries: [ContextQuery], $sessionId : String!) {
+  getContext(events: $events, queries: $queries, sessionId: $sessionId) {
     profile
     session
   }
