@@ -8,6 +8,9 @@ type Persona {
 
 type Segment {
   scope: Scope!
+  name : ID! // this can be generated from displayname, but never changed
+  displayName : String
+  conditions: [Condition]  
 }
 
 type List {
@@ -16,6 +19,13 @@ type List {
 
 type Interest {
   scope : Scope!
+  id: ID! // cannot change
+  displayName : String
+}
+
+type InterestScore {
+  interest: Interest!
+  score : Float // 0.0 to 1.0
 }
 
 interface Profile {
@@ -169,25 +179,29 @@ type EventFilter {
 type Context {
   profile : ClientProfile
   session : Session
-  filterResults : [FilterResult]
   events(filter : EventFilter) : [Event]
+  segments : [Segment]
+  dynamicSegments : [DynamicSegmentMatch]
+  interests : [InterestScore]
 }
 
-type Filter {
+type DynamicSegment {
   name : String!
-  query : BooleanQuery
+  condition: Condition
 }
 
-type FilterResult {
-  name : String!
-  result : Boolean
+type DynamicSegmentMatch {
+  name : String
+  matched : Boolean
+  executionTimeMillis : Long
 }
 
 // QUERY TYPES
 
 type Query {
   event(id : String) : Event
-  context(filters : [Filter], profileId: String) : Context
+  context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
+  count(condition : Condition) : Long // used to count profiles matching a condition
 }
 
 // sample usage of these query types
@@ -198,20 +212,65 @@ query eventById($id: ID!) {
   }
 }
 
-query completeContext($filters : [Filter], $sessionId : String) {
-  context(filters : $filters, sessionId : $sessionId) {
-    profile
-    session
-    filterResults
+query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+    profile {
+      properties(filter: []) {
+      }
+    }
+    session {
+      properties(filter: []) {
+      }
+    }
+    segments {
+      name
+    }
+    dynamicSegments {
+      name
+      matched
+      executionTimeMillis
+    }
+    interests {
+      interest {
+        id
+        displayName
+      }
+      score
+    }
   }
 }
 
-query smallContext($filters : [Filter], $sessionId : String) {
-  context(filters : $filters, sessionId : $sessionId) {
-    profile
+query smallContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+    profile {
+      properties(filter : ["email"]) {
+        value 
+      }      
+    }
   }
 }
 
+query allSegmentsContext($clientProfileId : String) {
+  context(clientProfileId : $clientProfileId) {
+    segments {
+      name
+    }
+  }
+}
+
+query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(clientProfileId : $clientProfileId) {
+    segments {
+      name
+    }
+    dynamicSegments {
+      name
+      matched
+    }
+  }
+}
+
+// retrieve profile email and last products viewed
 query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : EventFilter) {
   context(clientProfileId : $clientProfileId) {
     events(filter : $eventFilter) {
@@ -234,7 +293,7 @@ query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Eve
 
 type Mutation {
   createEvent(applicationKey: ApplicationKey!, type: EventType!, timeStamp : DateTime, location: GeoPoint, properties : [KeyValue]) : Event
-  getContext(events: [Event], filters : [Filter], sessionId: String) : Context
+  getContext(events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
 }
 
 // Sample usage of the above mutation type
@@ -260,8 +319,8 @@ mutation collectEvent($applicationKey: ApplicationKey!, $event : [Event]) {
   }
 }
 
-mutation getContext($events: [Event], $queries: [ContextQuery], $sessionId : String!) {
-  getContext(events: $events, queries: $queries, sessionId: $sessionId) {
+mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
+  getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
     profile
     session
   }
