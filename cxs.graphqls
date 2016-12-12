@@ -28,6 +28,15 @@ type InterestScore {
   score : Float // 0.0 to 1.0
 }
 
+// session are event attributes, spanning across clients and client profiles
+type Session {
+  clientProfiles : [ClientProfile]
+  events : [Event]
+  properties : [KeyValue]
+  startTime : Long
+  endTime : Long
+}
+
 interface Profile {
   id: ID!
   properties : [KeyValue]
