@@ -28,8 +28,12 @@ type InterestScore {
   score : Float // 0.0 to 1.0
 }
 
-// session are event attributes, spanning across clients and client profiles
+// session spanning across clients and client profiles, representing "work sessions" not web client sessions. In effect this means
+// that we have a session attached to a master profile, that will timeout after a certain period of user inactivity. Sessions are an
+// optional part of the specification.
 type Session {
+  id : ID!
+  masterProfile : MasterProfile
   clientProfiles : [ClientProfile]
   events : [Event]
   properties : [KeyValue]
@@ -138,7 +142,16 @@ type KeyValue {
 type Event {
   id: ID!
   type: [EventType]!
-  client: Client!
+  subject: ClientProfile!
+  session: Session // optional in specification
+  object: String!
+  location: [GeoPoint]
+  timestamp: DateTime
+  properties: [KeyValue]
+}
+
+type CreateEvent {
+  type: [EventType]!
   subject: ClientProfile!
   object: String!
   location: [GeoPoint]
