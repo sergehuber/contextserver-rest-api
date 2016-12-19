@@ -41,6 +41,10 @@ type Session {
   endTime : Long
 }
 
+type SessionFilter {
+  // tbd
+}
+
 interface Profile {
   id: ID!
   properties : [KeyValue]
