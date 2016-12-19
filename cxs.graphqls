@@ -17,14 +17,14 @@ type List {
   scope: Scope!
 }
 
-type Interest {
+type Topic {
   scope : Scope!
   id: ID! // cannot change
   displayName : String
 }
 
-type InterestScore {
-  interest: Interest!
+type Interest {
+  topic: Topic!
   score : Float // 0.0 to 1.0
 }
 
@@ -35,7 +35,7 @@ type Session {
   id : ID!
   masterProfile : MasterProfile
   clientProfiles : [ClientProfile]
-  events : [Event]
+  events(filters : [EventFilter]) : [Event]
   properties : [KeyValue]
   startTime : Long
   endTime : Long
@@ -66,6 +66,10 @@ type MasterProfile implements Profile {
   id: ID!
   properties : [PropertyValue] // defined in the CXS server configuration
   clientProfiles : [ClientProfile]
+  interests: [Interest]
+  segments : [Segment]
+  sessions(filter : [SessionFilter]) : [Session]
+  events(filter : [EventFilter]) : [Event]
   privacy : Privacy
   schema: SchemaCompoundType
 }
@@ -91,6 +95,7 @@ type ContextQuery {
 }
 
 type Condition {
+  
 }
 
 interface PropertyDefinition {
@@ -201,12 +206,13 @@ type EventFilter {
 type Context {
   profile : ClientProfile
   session : Session
-  events(filter : EventFilter) : [Event]
+  events(filter : EventFilter) : [Event] // e.g. last 5 events the user has sent
   segments : [Segment]
   dynamicSegments : [DynamicSegmentMatch]
-  interests : [InterestScore]
+  interests : [Interest]
 }
 
+// Dynamic segments are used to evaluate segment definitions stored in other systems (such as a WCM for personalization)
 type DynamicSegment {
   name : String!
   condition: Condition
@@ -224,9 +230,18 @@ type Query {
   event(id : String) : Event
   context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
   count(condition : Condition) : Long // used to count profiles matching a condition
+  profilesByTopic(topicId : String) : [MasterProfile]
 }
 
 // sample usage of these query types
+
+query profilesByTopic($topicId : ID!) {
+  profilesByTopic(topicId: $topicId) {
+    id
+    segments
+    properties
+  }
+}
 
 query eventById($id: ID!) {
   event(id: $id) {
@@ -281,7 +296,7 @@ query allSegmentsContext($clientProfileId : String) {
 }
 
 query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
-  context(clientProfileId : $clientProfileId) {
+  context(clientProfileId : $clientProfileId, dynamicSegments : $dynamicSegments) {
     segments {
       name
     }
