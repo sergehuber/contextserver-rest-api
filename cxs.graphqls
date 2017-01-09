@@ -1,175 +1,8 @@
-type Scope {
-  id: ID!
-}
+// GENERIC SCHEMA DEFINITIONS
+// ----------------------------------------------------------------------------
 
-type Persona {
-  scope : Scope!
-}
-
-type Segment {
-  scope: Scope!
-  name : ID! // this can be generated from displayname, but never changed
-  displayName : String
-  conditions: [Condition]  
-}
-
-type List {
-  scope: Scope!
-}
-
-type Topic {
-  scope : Scope!
-  id: ID! // cannot change
-  displayName : String
-}
-
-type Interest {
-  topic: Topic!
-  score : Float // 0.0 to 1.0
-}
-
-// session spanning across clients and client profiles, representing "work sessions" not web client sessions. In effect this means
-// that we have a session attached to a master profile, that will timeout after a certain period of user inactivity. Sessions are an
-// optional part of the specification.
-type Session {
-  id : ID!
-  masterProfile : MasterProfile
-  clientProfiles : [ClientProfile]
-  events(filters : [EventFilter]) : [Event]
-  properties : [KeyValue]
-  startTime : Long
-  endTime : Long
-}
-
-type SessionFilter {
-  // tbd
-}
-
-interface Profile {
-  id: ID!
-  properties : [KeyValue]
-}
-
-// Browser --(structured event)--> Client -> ClientProfile -> MasterProfile
-
-type ClientProfile implements Profile {
-  id: ID!
-  properties : [KeyValue] // defined in the CXS server configuration
-  client : Client
-  masterProfile : MasterProfile
-  schema: SchemaCompoundType
-}
-
-type PropertyValue {
-  key: String!
-  value: String
-  clients : [Client]
-}
-
-type MasterProfile implements Profile {
-  id: ID!
-  properties : [PropertyValue] // defined in the CXS server configuration
-  clientProfiles : [ClientProfile]
-  interests: [Interest]
-  segments : [Segment]
-  sessions(filter : [SessionFilter]) : [Session]
-  events(filter : [EventFilter]) : [Event]
-  privacy : Privacy
-  schema: SchemaCompoundType
-}
-
-type Privacy {
-  doNotTrack: Boolean
-  anonymousBrowsing : Boolean
-  propertiesPolicy : [PropertyPolicy]
-}
-
-type PropertyPolicy {
-  propertyKey : String!
-  policyName : String!
-}
-
-type PropertyPermission {
-  permission : String!
-  applicationKey : ApplicationKey
-}
-
-type ContextQuery {
-  conditions : [Condition]
-}
-
-type Condition {
-  
-}
-
-interface PropertyDefinition {
-  name : String!
-  description : String
-  type : String
-  identifier : Boolean
-}
-
-type EventPropertyDefinition {
-  name : String!
-  description : String
-  type : String
-  identifier : Boolean
-}
-
-type MasterPropertyDefinition {
-  name : String!
-  description : String
-  type : String
-  identifier : Boolean
-}
-
-type ApplicationKey {
-  client: Client!
-  label : String!
-  key: ID!
-  permissions: [String] // "createEvent", "createEventTypes", "fullAccess"
-}
-
-type Client {
-  applicationKeys: [ApplicationKey]
-  description: String!
-  name: String!
-  thirdPartySystem : Boolean
-}
-
-type PropertyValue {
-  key: String!
-  value: String
-  client : Client!
-}
-
-type KeyValue {
-  key: String!
-  value : String
-}
-
-type Event {
-  id: ID!
-  type: [EventType]!
-  subject: ClientProfile!
-  session: Session // optional in specification
-  object: String!
-  location: [GeoPoint]
-  timestamp: DateTime
-  properties: [KeyValue]
-}
-
-type CreateEvent {
-  type: [EventType]!
-  subject: ClientProfile!
-  object: String!
-  location: [GeoPoint]
-  timestamp: DateTime
-  properties: [KeyValue]
-}
-
-// schema definition 
 // the union is used to make it possible to define recursive type structures
+
 union SchemaType = SchemaScalarType | SchemaCompoundType
 
 type SchemaScalarType {
@@ -186,6 +19,67 @@ type SchemaCompoundType {
   types : [SchemaType]
 }
 
+type KeyValue {
+  key: String!
+  value : String
+}
+
+// MANAGEMENT OBJECTS
+// ----------------------------------------------------------------------------
+
+// Management objects are associated with a scope
+type Scope {
+  id: ID!
+}
+
+type Persona {
+  scope : Scope!
+}
+
+type Segment {
+  scope: Scope!
+  name : ID! // this can be generated from displayname, but never changed
+  displayName : String
+  conditions: [Condition]  
+}
+
+type Condition {
+  // tbd
+}
+
+type List {
+  scope: Scope!
+}
+
+type Topic {
+  scope : Scope!
+  id: ID! // cannot change
+  displayName : String
+}
+
+// EVENT-RELATED TYPES
+// ----------------------------------------------------------------------------
+
+type Event {
+  id: ID!
+  type: [EventType]!
+  subject: ClientProfile!
+  session: Session // optional in specification
+  object: String!
+  location: [GeoPoint]
+  timestamp: DateTime
+  properties: [KeyValue]
+}
+
+type NewEvent {
+  type: [EventType]!
+  subject: ClientProfile!
+  object: String!
+  location: [GeoPoint]
+  timestamp: DateTime
+  properties: [KeyValue]
+}
+
 // event types are defined using schema types, see event-analysis.md for examples
 
 type EventType {
@@ -194,17 +88,80 @@ type EventType {
   schema : SchemaCompoundType
 }
 
-enum SortOrder {
-  ASC,
-  DESC,
-  UNSPECIFIED
+// PROFILE TYPES
+// ----------------------------------------------------------------------------
+
+// Browser --(structured event)--> Client -> ClientProfile -> MasterProfile
+
+type ClientProfile {
+  id: ID!
+  properties : [KeyValue] // properties must match schema 
+  client : Client
+  masterProfile : MasterProfile
+  schema: SchemaCompoundType // defined in the CXS server configuration 
 }
 
-type EventFilter {
-  type : [String]!
-  length : Int
-  sortProperty : String
-  sortOrder : SortOrder
+type MasterPropertyValue {
+  key: String!
+  value: String
+  clients : [Client]
+}
+
+type Interest {
+  topic: Topic!
+  score : Float // 0.0 to 1.0
+}
+
+type MasterProfile {
+  id: ID!
+  properties : [MasterPropertyValue] // properties must match schema 
+  clientProfiles : [ClientProfile]
+  interests: [Interest]
+  segments : [Segment]
+  sessions(filter : [SessionFilter], first : Integer, last: Integer, after : String, before: String) : [SessionConnection]
+  events(filter : [EventFilter], first : Integer, last: Integer, after : String, before: String) : [EventConnection] // TODO: decide whether to use Relay-style pagination or another one
+  privacy : Privacy
+  schema: SchemaCompoundType  // defined in the CXS server configuration 
+}
+
+type Privacy {
+  doNotTrack: Boolean
+  anonymousBrowsing : Boolean
+  propertiesPolicy : [PropertyPolicy]
+}
+
+type PropertyPolicy {
+  propertyKey : String!
+  policyName : String!
+}
+
+// TODO do we need both this and policy ?
+type PropertyPermission {
+  permission : String!
+  applicationKey : ApplicationKey
+}
+
+// CLIENT TYPES
+// ----------------------------------------------------------------------------
+type ApplicationKey {
+  client: Client!
+  label : String!
+  key: ID!
+  permissions: [String] // "createEvent", "createEventTypes", "fullAccess"
+}
+
+type Client {
+  applicationKeys: [ApplicationKey]
+  description: String!
+  name: String!
+  thirdPartySystem : Boolean
+}
+
+// CONTEXT TYPES
+// ----------------------------------------------------------------------------
+
+type ContextQuery {
+  conditions : [Condition]
 }
 
 type Context {
@@ -228,7 +185,94 @@ type DynamicSegmentMatch {
   executionTimeMillis : Long
 }
 
-// QUERY TYPES
+// QUERY AND FILTER TYPES
+// ----------------------------------------------------------------------------
+enum SortOrder {
+  ASC,
+  DESC,
+  UNSPECIFIED
+}
+
+interface Filter {
+  sortKey : String // eg : endTime, properties.location
+  sortOrder : SortOrder  
+}
+
+type EventFilter implements Filter {
+  type : [String]!
+  sortProperty : String
+  sortOrder : SortOrder
+}
+
+// used to limit the number of sessions
+type SessionFilter {
+  sortProperty : String
+  sortOrder : SortOrder
+}
+
+// PAGINATION-RELATED TYPES
+// ----------------------------------------------------------------------------
+
+type PageInfo {
+  hasPreviousPage : Boolean!
+  hasNextPage : Boolean!
+}
+
+type EventEdge {
+  node : Event
+  cursor : String!
+}
+
+type EventConnection {
+  edges : [EventEdge]
+  pageInfo : PageInfo
+}
+
+type SessionEdge {
+  node : Session
+  cursor : String!
+}
+
+type SessionConnection {
+  edges : [SessionEdge]
+  pageInfo : PageInfo
+}
+
+type ClientProfileEdge {
+  node : ClientProfile
+  cursor : String!
+}
+
+type ClientProfileConnection {
+  edges : [ClientProfileEdge]
+  pageInfo : PageInfo
+}
+
+type MasterProfileEdge {
+  node : MasterProfile
+  cursor : String!
+}
+
+type MasterProfileConnection {
+  edges : [MasterProfileEdge]
+  pageInfo : PageInfo
+}
+
+// session spanning across clients and client profiles, representing "work sessions" not web client sessions. In effect this means
+// that we have a session attached to a master profile, that will timeout after a certain period of user inactivity. Sessions are an
+// optional part of the specification.
+type Session {
+  id : ID!
+  masterProfile : MasterProfile
+  clientProfiles : [ClientProfile]
+  events(filters : [EventFilter]) : [EventConnection]
+  properties : [KeyValue]
+  startTime : Long
+  endTime : Long
+}
+
+// GRAPHQL QUERY TYPES
+// ----------------------------------------------------------------------------
 
 type Query {
   event(id : String) : Event
@@ -237,7 +281,7 @@ type Query {
   profilesByTopic(topicId : String) : [MasterProfile]
 }
 
-// sample usage of these query types
+// Samples : sample usage of these query types
 
 query profilesByTopic($topicId : ID!) {
   profilesByTopic(topicId: $topicId) {
@@ -330,14 +374,15 @@ query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Eve
   }
 }
 
-// MUTATION TYPES
+// GRAPHQL MUTATION TYPES
+// ----------------------------------------------------------------------------
 
 type Mutation {
   createEvent(applicationKey: ApplicationKey!, type: EventType!, timeStamp : DateTime, location: GeoPoint, properties : [KeyValue]) : Event
   getContext(events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
 }
 
-// Sample usage of the above mutation type
+// Samples : Sample usage of the above mutation type
 
 mutation minimalCreateEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: [KeyValue] ) {
   createEvent(applicationKey: $applicationKey, type: $eventType, timeStamp : $timeStamp, location: $location, properties : $data) {
