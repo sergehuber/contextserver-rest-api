@@ -88,6 +88,30 @@ type EventType {
   schema : SchemaCompoundType
 }
 
+// Mutation samples (pre-defined mutations) :
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+mutation minimalCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
+  createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
+  }
+}
+
+mutation detailedCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
+  createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
+    id
+    type
+    client
+    subject
+    object
+    properties
+  }
+}
+
+mutation collectEvent($applicationKey: ApplicationKey!, $newEvents : [NewEvent]) {
+  collectEvent(applicationKey: $applicationKey, newEvents: $newEvents) {
+  }
+}
+
 // PROFILE TYPES
 // ----------------------------------------------------------------------------
 
@@ -183,6 +207,16 @@ type DynamicSegmentMatch {
   name : String
   matched : Boolean
   executionTimeMillis : Long
+}
+
+// Mutation samples (pre-defined mutations) :
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
+  getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
+    profile
+    session
+  }
 }
 
 // QUERY AND FILTER TYPES
@@ -282,6 +316,7 @@ type Query {
 }
 
 // Samples : sample usage of these query types
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 query profilesByTopic($topicId : ID!) {
   profilesByTopic(topicId: $topicId) {
@@ -378,36 +413,7 @@ query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Eve
 // ----------------------------------------------------------------------------
 
 type Mutation {
-  createEvent(applicationKey: ApplicationKey!, type: EventType!, timeStamp : DateTime, location: GeoPoint, properties : [KeyValue]) : Event
+  createEvent(applicationKey: ApplicationKey!, newEvent: NewEvent!) : Event
+  collectEvent(applicationKey: ApplicationKey!, newEvents: [NewEvent]!) : Int
   getContext(events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
-}
-
-// Samples : Sample usage of the above mutation type
-
-mutation minimalCreateEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: [KeyValue] ) {
-  createEvent(applicationKey: $applicationKey, type: $eventType, timeStamp : $timeStamp, location: $location, properties : $data) {
-  }
-}
-
-mutation detailedCreateEvent($applicationKey: ApplicationKey!, $eventType: EventType!, $timeStamp: Date, $location: GeoPoint, $data: [KeyValue] ) {
-  createEvent(applicationKey: $applicationKey, type: $eventType, timeStamp : $timeStamp, location: $location, properties : $data) {
-    id
-    type
-    client
-    subject
-    object
-    properties
-  }
-}
-
-mutation collectEvent($applicationKey: ApplicationKey!, $event : [Event]) {
-  collectEvent(applicationKey: $applicationKey, event: $event) {
-  }
-}
-
-mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
-  getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
-    profile
-    session
-  }
 }
