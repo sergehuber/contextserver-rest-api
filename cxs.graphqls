@@ -10,7 +10,7 @@ type SchemaScalarType {
   description : String
   type : String // scalar type
   identifier : Boolean
-  aliases : [String] // email, e-mail, mail, mél, couriel
+  aliases : [String] // email, e-mail, mail, mel, couriel
 }
 
 type SchemaCompoundType {
@@ -40,11 +40,10 @@ type Segment {
   scope: Scope!
   name : ID! // this can be generated from displayname, but never changed
   displayName : String
-  conditions: [Condition]  
-}
-
-type Condition {
-  // tbd
+  // todo should we do this like this or should we create another condition type to do this ?
+  profileFilter: Filter
+  eventFilter : Filter
+  sessionFilter : Filter
 }
 
 type List {
@@ -142,8 +141,8 @@ type MasterProfile {
   clientProfiles : [ClientProfile]
   interests: [Interest]
   segments : [Segment]
-  sessions(filter : [SessionFilter], first : Integer, last: Integer, after : String, before: String) : [SessionConnection]
-  events(filter : [EventFilter], first : Integer, last: Integer, after : String, before: String) : [EventConnection] // TODO: decide whether to use Relay-style pagination or another one
+  sessions(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [SessionConnection]
+  events(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [EventConnection] // TODO: decide whether to use Relay-style pagination or another one
   privacy : Privacy
   schema: SchemaCompoundType  // defined in the CXS server configuration 
 }
@@ -185,13 +184,13 @@ type Client {
 // ----------------------------------------------------------------------------
 
 type ContextQuery {
-  conditions : [Condition]
+  filter : [Filter]
 }
 
 type Context {
   profile : ClientProfile
   session : Session
-  events(filter : EventFilter) : [Event] // e.g. last 5 events the user has sent
+  events(filter : Filter) : [Event] // e.g. last 5 events the user has sent
   segments : [Segment]
   dynamicSegments : [DynamicSegmentMatch]
   interests : [Interest]
@@ -200,7 +199,7 @@ type Context {
 // Dynamic segments are used to evaluate segment definitions stored in other systems (such as a WCM for personalization)
 type DynamicSegment {
   name : String!
-  condition: Condition
+  filter: Filter
 }
 
 type DynamicSegmentMatch {
@@ -227,21 +226,62 @@ enum SortOrder {
   UNSPECIFIED
 }
 
-interface Filter {
-  sortKey : String // eg : endTime, properties.location
-  sortOrder : SortOrder  
+// (timestamp > January 1st, 2016 AND timestamp < January 1st, 2017 AND type = 'PageView') OR location is in Geneva Area
+// OR(
+//   AND(
+//     GT(timeStamp, January 1st 2016),
+//     LT(timeStamp, January 1st 2017),
+//     EQUALS(type, 'PageView')
+//   ),
+//   GEODISTANCE(location,'Geneva', '30km')
+// )
+
+// query filteredEvents(filter : Filter) {
+//   events(filter : $filter) {
+//     edges {
+//       type
+//     }
+//   }
+// }
+// variables:
+// {
+//   "filterFunction": {
+//     "function" : "OR",
+//     "arguments" : [
+//       {
+//         "function" : "AND",
+//         "arguments" : [
+//           { "function" : "GT", "arguments" : [ "timeStamp", "January 1st, 2016" ] },
+//           { "function" : "LT", "arguments" : [ "timeStamp", "January 1st, 2017" ] },
+//           { "function" : "EQUALS", "arguments" : [ "type", "PageView" ] },
+//         ]
+//       },
+//       {
+//         "function" : "GEODISTANCE",
+//         "arguments" : [ "location", "Geneva", "30km" ]
+//       }
+//     ]
+//   },
+//   "orderBy" : [
+//     { fieldName : "type", order : "ASC" },
+//     { fieldName : "properties.pageID", order : "DESC" }
+//   ]
+// }
+
+union FilterArgument = Boolean | Int | Float | String | FilterFunction
+
+type FilterFunction {
+  function : String!
+  arguments : [FilterArgument]
 }
 
-type EventFilter implements Filter {
-  type : [String]!
-  sortProperty : String
-  sortOrder : SortOrder
+type OrderBy {
+  fieldName : String // eg : endTime, properties.location
+  order : SortOrder
 }
 
-// used to limit the number of sessions
-type SessionFilter {
-  sortProperty : String
-  sortOrder : SortOrder
+type Filter {
+  filterFunction : FilterFunction
 }
 
 // PAGINATION-RELATED TYPES
@@ -299,7 +339,7 @@ type Session {
   id : ID!
   masterProfile : MasterProfile
   clientProfiles : [ClientProfile]
-  events(filters : [EventFilter]) : [EventConnection]
+  events(filters : Filter) : [EventConnection]
   properties : [KeyValue]
   startTime : Long
   endTime : Long
@@ -310,8 +350,9 @@ type Session {
 
 type Query {
   event(id : String) : Event
+  events(filter : Filter, orderBy : [OrderBy]) : [EventConnection]
   context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
-  count(condition : Condition) : Long // used to count profiles matching a condition
+  count(filter : Filter) : Long // used to count profiles matching a condition
   profilesByTopic(topicId : String) : [MasterProfile]
 }
 
@@ -391,7 +432,7 @@ query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $c
 }
 
 // retrieve profile email and last products viewed
-query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : EventFilter) {
+query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Filter) {
   context(clientProfileId : $clientProfileId) {
     events(filter : $eventFilter) {
       timeStamp
