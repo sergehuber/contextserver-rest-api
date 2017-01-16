@@ -236,8 +236,8 @@ enum SortOrder {
 //   GEODISTANCE(location,'Geneva', '30km')
 // )
 
-// query filteredEvents(filter : Filter) {
-//   events(filter : $filter) {
+// query filteredEvents(filter : Filter, orderBy : [OrderBy]) {
+//   events(filter : $filter, orderBy : $orderBy) {
 //     edges {
 //       type
 //     }
