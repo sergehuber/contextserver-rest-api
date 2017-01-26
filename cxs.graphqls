@@ -41,9 +41,8 @@ type Segment {
   name : ID! // this can be generated from displayname, but never changed
   displayName : String
   // todo should we do this like this or should we create another condition type to do this ?
-  profileFilter: Filter
   eventFilter : Filter
-  sessionFilter : Filter
+  profileFilter: Filter
 }
 
 type List {
@@ -63,7 +62,6 @@ type Event {
   id: ID!
   type: [EventType]!
   subject: ClientProfile!
-  session: Session // optional in specification
   object: String!
   location: [GeoPoint]
   timestamp: DateTime
@@ -332,15 +330,30 @@ type MasterProfileConnection {
   pageInfo : PageInfo
 }
 
+// SESSION TYPES
+// ----------------------------------------------------------------------------
+
+// a client session is associated to a client to retrieve information related to his current interactions through the client.
+
+type ClientSession {
+  id: ID!
+  clientProfile : ClientProfile
+  properties : [KeyValue] // could be computed by querying events, or stored pre-computed (ipAddress=1.2.3.4, location=TGV from Geneva to Paris, Wagon 12, Seat 71)
+  events(filters : Filter) : [EventConnection]
+  startTime : Long
+  endTime : Long  
+}
+
 // session spanning across clients and client profiles, representing "work sessions" not web client sessions. In effect this means
 // that we have a session attached to a master profile, that will timeout after a certain period of user inactivity. Sessions are an
-// optional part of the specification.
-type Session {
+// optional part of the specification. The master session might be created at a later time by for example using time-based correlation on multiple 
+// client session accesses
+
+type MasterSession {
   id : ID!
   masterProfile : MasterProfile
-  clientProfiles : [ClientProfile]
+  clientSessions : [ClientSession]
   events(filters : Filter) : [EventConnection]
-  properties : [KeyValue]
   startTime : Long
   endTime : Long
 }
