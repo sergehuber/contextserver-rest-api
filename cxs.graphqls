@@ -186,12 +186,14 @@ type ContextQuery {
 }
 
 type Context {
-  profile : ClientProfile
-  session : Session
+  clientProfile : ClientProfile
+  properties : [KeyValue] // could be computed by querying events, or stored pre-computed (ipAddress=1.2.3.4, location=TGV from Geneva to Paris, Wagon 12, Seat 71)
   events(filter : Filter) : [Event] // e.g. last 5 events the user has sent
   segments : [Segment]
   dynamicSegments : [DynamicSegmentMatch]
   interests : [Interest]
+  initiated : Long
+  terminated : Long  
 }
 
 // Dynamic segments are used to evaluate segment definitions stored in other systems (such as a WCM for personalization)
@@ -213,6 +215,24 @@ mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clie
   getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
     profile
     session
+  }
+}
+
+// INBOUND EVENT TYPES
+// ----------------------------------------------------------------------------
+// Inbound event could be used to push information from the context server back to a client. An example of an inbound event could 
+// include resolved locations, resolved client identification (server). Inbound events could be used for real-time personalization
+
+type Subscription {
+  inboundEvents(clientProfileId : String, filter: Filter) : Event!
+}
+
+// Subscription samples (pre-defined mutations) :
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+subscription getLastInboundEventProperties($clientProfileId : String!, $filter : Filter) {
+  inboundEvents(clientProfileId : $clientProfileId, filter: $filter) {
+    eventType
+    properties
   }
 }
 
@@ -328,34 +348,6 @@ type MasterProfileEdge {
 type MasterProfileConnection {
   edges : [MasterProfileEdge]
   pageInfo : PageInfo
-}
-
-// SESSION TYPES
-// ----------------------------------------------------------------------------
-
-// a client session is associated to a client to retrieve information related to his current interactions through the client.
-
-type ClientSession {
-  id: ID!
-  clientProfile : ClientProfile
-  properties : [KeyValue] // could be computed by querying events, or stored pre-computed (ipAddress=1.2.3.4, location=TGV from Geneva to Paris, Wagon 12, Seat 71)
-  events(filters : Filter) : [EventConnection]
-  startTime : Long
-  endTime : Long  
-}
-
-// session spanning across clients and client profiles, representing "work sessions" not web client sessions. In effect this means
-// that we have a session attached to a master profile, that will timeout after a certain period of user inactivity. Sessions are an
-// optional part of the specification. The master session might be created at a later time by for example using time-based correlation on multiple 
-// client session accesses
-
-type MasterSession {
-  id : ID!
-  masterProfile : MasterProfile
-  clientSessions : [ClientSession]
-  events(filters : Filter) : [EventConnection]
-  startTime : Long
-  endTime : Long
 }
 
 // GRAPHQL QUERY TYPES
