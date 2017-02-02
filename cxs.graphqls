@@ -139,7 +139,6 @@ type MasterProfile {
   clientProfiles : [ClientProfile]
   interests: [Interest]
   segments : [Segment]
-  sessions(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [SessionConnection]
   events(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [EventConnection] // TODO: decide whether to use Relay-style pagination or another one
   privacy : Privacy
   schema: SchemaCompoundType  // defined in the CXS server configuration 
@@ -214,7 +213,6 @@ type DynamicSegmentMatch {
 mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
   getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
     profile
-    session
   }
 }
 
@@ -320,16 +318,6 @@ type EventConnection {
   pageInfo : PageInfo
 }
 
-type SessionEdge {
-  node : Session
-  cursor : String!
-}
-
-type SessionConnection {
-  edges : [SessionEdge]
-  pageInfo : PageInfo
-}
-
 type ClientProfileEdge {
   node : ClientProfile
   cursor : String!
@@ -381,10 +369,6 @@ query eventById($id: ID!) {
 query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
   context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
     profile {
-      properties(filter: []) {
-      }
-    }
-    session {
       properties(filter: []) {
       }
     }
