@@ -85,8 +85,35 @@ type EventType {
   schema : SchemaCompoundType
 }
 
-// Mutation samples (pre-defined mutations) :
+// Queries
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+extends type Query {
+  event(id : String) : Event
+  events(filter : Filter, orderBy : [OrderBy]) : [EventConnection]
+}
+
+// Samples
+
+query eventById($id: ID!) {
+  event(id: $id) {
+    type
+  }
+}
+
+// Mutations 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+extends type Mutation {
+  createEvent(applicationKey: ApplicationKey, newEvent: NewEvent!) : Event
+  collectEvent(applicationKey: ApplicationKey, newEvents: [NewEvent]!) : Int
+}
+
+// Samples 
 
 mutation minimalCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
   createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
@@ -161,6 +188,55 @@ type PropertyPermission {
   applicationKey : ApplicationKey
 }
 
+enum ImportStrategy {
+  SKIP,
+  OVERWRITE, 
+  MERGE
+}
+
+type ImportOptions {
+  strategy : ImportStrategy
+  
+}
+
+type Progress {
+  percentage: Double
+  message: String
+}
+
+type ImportResult {
+  progress: Progress
+  importedProfilesCount : Long
+  skippedProfiles : [ClientProfile]
+}
+
+// Queries
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+type Query {
+  count(filter : Filter) : Long // used to count profiles matching a condition
+  profilesByTopic(topicId : String) : [MasterProfile]
+}
+
+// Samples
+
+query profilesByTopic($topicId : ID!) {
+  profilesByTopic(topicId: $topicId) {
+    id
+    segments
+    properties
+  }
+}
+
+// Subscription
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+extends type Subscription {
+  importClientProfiles(applicationKey: ApplicationKey, profiles : [ClientProfile], importOptions: ImportOptions) : ImportResult
+}
+
 // CLIENT TYPES
 // ----------------------------------------------------------------------------
 type ApplicationKey {
@@ -207,8 +283,100 @@ type DynamicSegmentMatch {
   executionTimeMillis : Long
 }
 
-// Mutation samples (pre-defined mutations) :
+// Queries
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+extends type Query {
+  context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
+}
+
+// Samples
+
+query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+    profile {
+      properties(filter: []) {
+      }
+    }
+    segments {
+      name
+    }
+    dynamicSegments {
+      name
+      matched
+      executionTimeMillis
+    }
+    interests {
+      interest {
+        id
+        displayName
+      }
+      score
+    }
+  }
+}
+
+query smallContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+    profile {
+      properties(filter : ["email"]) {
+        value 
+      }      
+    }
+  }
+}
+
+query allSegmentsContext($clientProfileId : String) {
+  context(clientProfileId : $clientProfileId) {
+    segments {
+      name
+    }
+  }
+}
+
+query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+  context(clientProfileId : $clientProfileId, dynamicSegments : $dynamicSegments) {
+    segments {
+      name
+    }
+    dynamicSegments {
+      name
+      matched
+    }
+  }
+}
+
+// retrieve profile email and last products viewed
+query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Filter) {
+  context(clientProfileId : $clientProfileId) {
+    events(filter : $eventFilter) {
+      timeStamp
+      object
+      properties(filter: ["productName", "productSKU", "productDescription"]) {
+        key
+        value
+      }
+    }
+    profile {
+      properties(filter : "email") {
+        value
+      }
+    }
+  }
+}
+
+// Mutations
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+extends type Mutation {
+  getContext(applicationKey: ApplicationKey, events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
+}
+
+// Samples
 
 mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
   getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
@@ -216,12 +384,22 @@ mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clie
   }
 }
 
+// Subscriptions
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Definitions
+
+extends type Subscription {
+  context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
+}
+
+
 // INBOUND EVENT TYPES
 // ----------------------------------------------------------------------------
 // Inbound event could be used to push information from the context server back to a client. An example of an inbound event could 
 // include resolved locations, resolved client identification (server). Inbound events could be used for real-time personalization
 
-type Subscription {
+extends type Subscription {
   inboundEvents(clientProfileId : String, filter: Filter) : Event!
 }
 
@@ -336,114 +514,4 @@ type MasterProfileEdge {
 type MasterProfileConnection {
   edges : [MasterProfileEdge]
   pageInfo : PageInfo
-}
-
-// GRAPHQL QUERY TYPES
-// ----------------------------------------------------------------------------
-
-type Query {
-  event(id : String) : Event
-  events(filter : Filter, orderBy : [OrderBy]) : [EventConnection]
-  context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
-  count(filter : Filter) : Long // used to count profiles matching a condition
-  profilesByTopic(topicId : String) : [MasterProfile]
-}
-
-// Samples : sample usage of these query types
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-query profilesByTopic($topicId : ID!) {
-  profilesByTopic(topicId: $topicId) {
-    id
-    segments
-    properties
-  }
-}
-
-query eventById($id: ID!) {
-  event(id: $id) {
-    type
-  }
-}
-
-query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
-  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
-    profile {
-      properties(filter: []) {
-      }
-    }
-    segments {
-      name
-    }
-    dynamicSegments {
-      name
-      matched
-      executionTimeMillis
-    }
-    interests {
-      interest {
-        id
-        displayName
-      }
-      score
-    }
-  }
-}
-
-query smallContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
-  context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
-    profile {
-      properties(filter : ["email"]) {
-        value 
-      }      
-    }
-  }
-}
-
-query allSegmentsContext($clientProfileId : String) {
-  context(clientProfileId : $clientProfileId) {
-    segments {
-      name
-    }
-  }
-}
-
-query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
-  context(clientProfileId : $clientProfileId, dynamicSegments : $dynamicSegments) {
-    segments {
-      name
-    }
-    dynamicSegments {
-      name
-      matched
-    }
-  }
-}
-
-// retrieve profile email and last products viewed
-query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Filter) {
-  context(clientProfileId : $clientProfileId) {
-    events(filter : $eventFilter) {
-      timeStamp
-      object
-      properties(filter: ["productName", "productSKU", "productDescription"]) {
-        key
-        value
-      }
-    }
-    profile {
-      properties(filter : "email") {
-        value
-      }
-    }
-  }
-}
-
-// GRAPHQL MUTATION TYPES
-// ----------------------------------------------------------------------------
-
-type Mutation {
-  createEvent(applicationKey: ApplicationKey!, newEvent: NewEvent!) : Event
-  collectEvent(applicationKey: ApplicationKey!, newEvents: [NewEvent]!) : Int
-  getContext(events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
 }
