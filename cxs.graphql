@@ -1,0 +1,167 @@
+
+# EVENT-RELATED TYPES
+# ----------------------------------------------------------------------------
+
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Samples
+
+query eventById($id: ID!) {
+    event(id: $id) {
+        type
+    }
+}
+
+# Mutations
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Samples
+
+mutation minimalCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
+    createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
+        id
+    }
+}
+
+mutation detailedCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
+    createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
+        id
+        type
+        client
+        subject
+        object
+        properties
+    }
+}
+
+mutation collectEvent($applicationKey: ApplicationKey!, $newEvents : [NewEvent]) {
+    collectEvent(applicationKey: $applicationKey, newEvents: $newEvents) {
+        id
+    }
+}
+
+# PROFILE TYPES
+# ----------------------------------------------------------------------------
+
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Samples
+
+query profilesByTopic($topicId : ID!) {
+    profilesByTopic(topicId: $topicId) {
+        id
+        segments
+        properties
+    }
+}
+
+
+# CONTEXT TYPES
+# ----------------------------------------------------------------------------
+
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Samples
+
+query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+    context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+        profile {
+            properties(filter: []) {
+                key
+                value
+            }
+        }
+        segments {
+            name
+        }
+        dynamicSegments {
+            name
+            matched
+            executionTimeMillis
+        }
+        interests {
+            interest {
+                id
+                displayName
+            }
+            score
+        }
+    }
+}
+
+query smallContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+    context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
+        profile {
+            properties(filter : ["email"]) {
+                value
+            }
+        }
+    }
+}
+
+query allSegmentsContext($clientProfileId : String) {
+    context(clientProfileId : $clientProfileId) {
+        segments {
+            name
+        }
+    }
+}
+
+query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
+    context(clientProfileId : $clientProfileId, dynamicSegments : $dynamicSegments) {
+        segments {
+            name
+        }
+        dynamicSegments {
+            name
+            matched
+        }
+    }
+}
+
+# retrieve profile email and last products viewed
+query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Filter) {
+    context(clientProfileId : $clientProfileId) {
+        events(filter : $eventFilter) {
+            timeStamp
+            object
+            properties(filter: ["productName", "productSKU", "productDescription"]) {
+                key
+                value
+            }
+        }
+        profile {
+            properties(filter : "email") {
+                value
+            }
+        }
+    }
+}
+
+# Mutations
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Samples
+
+mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
+    getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
+        profile
+    }
+}
+
+# INBOUND EVENT TYPES
+# ----------------------------------------------------------------------------
+# Inbound event could be used to push information from the context server back to a client. An example of an inbound event could
+# include resolved locations, resolved client identification (server). Inbound events could be used for real-time personalization
+
+# Subscription samples (pre-defined mutations) :
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+subscription getLastInboundEventProperties($clientProfileId : String!, $filter : Filter) {
+    inboundEvents(clientProfileId : $clientProfileId, filter: $filter) {
+        eventType
+        properties
+    }
+}
