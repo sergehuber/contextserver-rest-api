@@ -1,16 +1,16 @@
-// GENERIC SCHEMA DEFINITIONS
-// ----------------------------------------------------------------------------
+# GENERIC SCHEMA DEFINITIONS
+# ----------------------------------------------------------------------------
 
-// the union is used to make it possible to define recursive type structures
+# the union is used to make it possible to define recursive type structures
 
 union SchemaType = SchemaScalarType | SchemaCompoundType
 
 type SchemaScalarType {
   name : String!
   description : String
-  type : String // scalar type
+  type : String # scalar type
   identifier : Boolean
-  aliases : [String] // email, e-mail, mail, mel, couriel
+  aliases : [String] # email, e-mail, mail, mel, couriel
 }
 
 type SchemaCompoundType {
@@ -24,10 +24,10 @@ type KeyValue {
   value : String
 }
 
-// MANAGEMENT OBJECTS
-// ----------------------------------------------------------------------------
+# MANAGEMENT OBJECTS
+# ----------------------------------------------------------------------------
 
-// Management objects are associated with a scope
+# Management objects are associated with a scope
 type Scope {
   id: ID!
 }
@@ -38,9 +38,9 @@ type Persona {
 
 type Segment {
   scope: Scope!
-  name : ID! // this can be generated from displayname, but never changed
+  name : ID! # this can be generated from displayname, but never changed
   displayName : String
-  // todo should we do this like this or should we create another condition type to do this ?
+  # todo should we do this like this or should we create another condition type to do this ?
   eventFilter : Filter
   profileFilter: Filter
 }
@@ -51,12 +51,12 @@ type List {
 
 type Topic {
   scope : Scope!
-  id: ID! // cannot change
+  id: ID! # cannot change
   displayName : String
 }
 
-// EVENT-RELATED TYPES
-// ----------------------------------------------------------------------------
+# EVENT-RELATED TYPES
+# ----------------------------------------------------------------------------
 
 type Event {
   id: ID!
@@ -77,25 +77,25 @@ type NewEvent {
   properties: [KeyValue]
 }
 
-// event types are defined using schema types, see event-analysis.md for examples
+# event types are defined using schema types, see event-analysis.md for examples
 
 type EventType {
-  id: ID! // human-readable, unique, ex: org.oasis-open.cxs.webClient.PageView,org.acmeCrm.cxs.crmClient.ColdCall
+  id: ID! # human-readable, unique, ex: org.oasis-open.cxs.webClient.PageView,org.acmeCrm.cxs.crmClient.ColdCall
   description: String
   schema : SchemaCompoundType
 }
 
-// Queries
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 extends type Query {
   event(id : String) : Event
   events(filter : Filter, orderBy : [OrderBy]) : [EventConnection]
 }
 
-// Samples
+# Samples
 
 query eventById($id: ID!) {
   event(id: $id) {
@@ -103,17 +103,17 @@ query eventById($id: ID!) {
   }
 }
 
-// Mutations 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Mutations 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 extends type Mutation {
   createEvent(applicationKey: ApplicationKey, newEvent: NewEvent!) : Event
   collectEvent(applicationKey: ApplicationKey, newEvents: [NewEvent]!) : Int
 }
 
-// Samples 
+# Samples 
 
 mutation minimalCreateEvent($applicationKey: ApplicationKey!, $newEvent: NewEvent ) {
   createEvent(applicationKey: $applicationKey, newEvent: $newEvent) {
@@ -136,17 +136,17 @@ mutation collectEvent($applicationKey: ApplicationKey!, $newEvents : [NewEvent])
   }
 }
 
-// PROFILE TYPES
-// ----------------------------------------------------------------------------
+# PROFILE TYPES
+# ----------------------------------------------------------------------------
 
-// Browser --(structured event)--> Client -> ClientProfile -> MasterProfile
+# Browser --(structured event)--> Client -> ClientProfile -> MasterProfile
 
 type ClientProfile {
   id: ID!
-  properties : [KeyValue] // properties must match schema 
+  properties : [KeyValue] # properties must match schema 
   client : Client
   masterProfile : MasterProfile
-  schema: SchemaCompoundType // defined in the CXS server configuration 
+  schema: SchemaCompoundType # defined in the CXS server configuration 
 }
 
 type MasterPropertyValue {
@@ -157,18 +157,18 @@ type MasterPropertyValue {
 
 type Interest {
   topic: Topic!
-  score : Float // 0.0 to 1.0
+  score : Float # 0.0 to 1.0
 }
 
 type MasterProfile {
   id: ID!
-  properties : [MasterPropertyValue] // properties must match schema 
+  properties : [MasterPropertyValue] # properties must match schema 
   clientProfiles : [ClientProfile]
   interests: [Interest]
   segments : [Segment]
-  events(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [EventConnection] // TODO: decide whether to use Relay-style pagination or another one
+  events(filter : Filter, first : Integer, last: Integer, after : String, before: String) : [EventConnection] # TODO: decide whether to use Relay-style pagination or another one
   privacy : Privacy
-  schema: SchemaCompoundType  // defined in the CXS server configuration 
+  schema: SchemaCompoundType  # defined in the CXS server configuration 
 }
 
 type Privacy {
@@ -182,7 +182,7 @@ type PropertyPolicy {
   policyName : String!
 }
 
-// TODO do we need both this and policy ?
+# TODO do we need both this and policy ?
 type PropertyPermission {
   permission : String!
   applicationKey : ApplicationKey
@@ -210,17 +210,17 @@ type ImportResult {
   skippedProfiles : [ClientProfile]
 }
 
-// Queries
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 type Query {
-  count(filter : Filter) : Long // used to count profiles matching a condition
+  count(filter : Filter) : Long # used to count profiles matching a condition
   profilesByTopic(topicId : String) : [MasterProfile]
 }
 
-// Samples
+# Samples
 
 query profilesByTopic($topicId : ID!) {
   profilesByTopic(topicId: $topicId) {
@@ -230,20 +230,20 @@ query profilesByTopic($topicId : ID!) {
   }
 }
 
-// Subscription
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Subscription
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 extends type Subscription {
   importClientProfiles(applicationKey: ApplicationKey, profiles : [ClientProfile], importOptions: ImportOptions) : ImportResult
 }
 
-// CLIENT TYPES
-// ----------------------------------------------------------------------------
+# CLIENT TYPES
+# ----------------------------------------------------------------------------
 type ApplicationKey {
   client: Client!
   label : String!
   key: ID!
-  permissions: [String] // "createEvent", "createEventTypes", "fullAccess"
+  permissions: [String] # "createEvent", "createEventTypes", "fullAccess"
 }
 
 type Client {
@@ -253,8 +253,8 @@ type Client {
   thirdPartySystem : Boolean
 }
 
-// CONTEXT TYPES
-// ----------------------------------------------------------------------------
+# CONTEXT TYPES
+# ----------------------------------------------------------------------------
 
 type ContextQuery {
   filter : [Filter]
@@ -262,8 +262,8 @@ type ContextQuery {
 
 type Context {
   clientProfile : ClientProfile
-  properties : [KeyValue] // could be computed by querying events, or stored pre-computed (ipAddress=1.2.3.4, location=TGV from Geneva to Paris, Wagon 12, Seat 71)
-  events(filter : Filter) : [Event] // e.g. last 5 events the user has sent
+  properties : [KeyValue] # could be computed by querying events, or stored pre-computed (ipAddress=1.2.3.4, location=TGV from Geneva to Paris, Wagon 12, Seat 71)
+  events(filter : Filter) : [Event] # e.g. last 5 events the user has sent
   segments : [Segment]
   dynamicSegments : [DynamicSegmentMatch]
   interests : [Interest]
@@ -271,7 +271,7 @@ type Context {
   terminated : Long  
 }
 
-// Dynamic segments are used to evaluate segment definitions stored in other systems (such as a WCM for personalization)
+# Dynamic segments are used to evaluate segment definitions stored in other systems (such as a WCM for personalization)
 type DynamicSegment {
   name : String!
   filter: Filter
@@ -283,16 +283,16 @@ type DynamicSegmentMatch {
   executionTimeMillis : Long
 }
 
-// Queries
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Queries
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 extends type Query {
   context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
 }
 
-// Samples
+# Samples
 
 query completeContext($dynamicSegments : [DynamicSegment], $clientProfileId : String) {
   context(dynamicSegments : $dynamicSegments, clientProfileId : $clientProfileId) {
@@ -348,7 +348,7 @@ query contextAllSegmentsIncludingDynamic($dynamicSegments : [DynamicSegment], $c
   }
 }
 
-// retrieve profile email and last products viewed
+# retrieve profile email and last products viewed
 query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Filter) {
   context(clientProfileId : $clientProfileId) {
     events(filter : $eventFilter) {
@@ -367,16 +367,16 @@ query emailAndProductsViewsContext($clientProfileId : String, $eventFilter : Fil
   }
 }
 
-// Mutations
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Mutations
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 extends type Mutation {
   getContext(applicationKey: ApplicationKey, events: [Event], dynamicSegments : [DynamicSegment], clientProfileId: String!) : Context
 }
 
-// Samples
+# Samples
 
 mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clientProfileId : String!) {
   getContext(events: $events, dynamicSegments: $dynamicSegments, clientProfileId: $clientProfileId) {
@@ -384,27 +384,27 @@ mutation getContext($events: [Event], $dynamicSegments : [DynamicSegment], $clie
   }
 }
 
-// Subscriptions
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Subscriptions
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Definitions
+# Definitions
 
 extends type Subscription {
   context(dynamicSegments : [DynamicSegment], clientProfileId: String) : Context
 }
 
 
-// INBOUND EVENT TYPES
-// ----------------------------------------------------------------------------
-// Inbound event could be used to push information from the context server back to a client. An example of an inbound event could 
-// include resolved locations, resolved client identification (server). Inbound events could be used for real-time personalization
+# INBOUND EVENT TYPES
+# ----------------------------------------------------------------------------
+# Inbound event could be used to push information from the context server back to a client. An example of an inbound event could 
+# include resolved locations, resolved client identification (server). Inbound events could be used for real-time personalization
 
 extends type Subscription {
   inboundEvents(clientProfileId : String, filter: Filter) : Event!
 }
 
-// Subscription samples (pre-defined mutations) :
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Subscription samples (pre-defined mutations) :
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 subscription getLastInboundEventProperties($clientProfileId : String!, $filter : Filter) {
   inboundEvents(clientProfileId : $clientProfileId, filter: $filter) {
     eventType
@@ -412,55 +412,55 @@ subscription getLastInboundEventProperties($clientProfileId : String!, $filter :
   }
 }
 
-// QUERY AND FILTER TYPES
-// ----------------------------------------------------------------------------
+# QUERY AND FILTER TYPES
+# ----------------------------------------------------------------------------
 enum SortOrder {
   ASC,
   DESC,
   UNSPECIFIED
 }
 
-// (timestamp > January 1st, 2016 AND timestamp < January 1st, 2017 AND type = 'PageView') OR location is in Geneva Area
-// OR(
-//   AND(
-//     GT(timeStamp, January 1st 2016),
-//     LT(timeStamp, January 1st 2017),
-//     EQUALS(type, 'PageView')
-//   ),
-//   GEODISTANCE(location,'Geneva', '30km')
-// )
+# (timestamp > January 1st, 2016 AND timestamp < January 1st, 2017 AND type = 'PageView') OR location is in Geneva Area
+# OR(
+#   AND(
+#     GT(timeStamp, January 1st 2016),
+#     LT(timeStamp, January 1st 2017),
+#     EQUALS(type, 'PageView')
+#   ),
+#   GEODISTANCE(location,'Geneva', '30km')
+# )
 
-// query filteredEvents(filter : Filter, orderBy : [OrderBy]) {
-//   events(filter : $filter, orderBy : $orderBy) {
-//     edges {
-//       type
-//     }
-//   }
-// }
-// variables:
-// {
-//   "filterFunction": {
-//     "function" : "OR",
-//     "arguments" : [
-//       {
-//         "function" : "AND",
-//         "arguments" : [
-//           { "function" : "GT", "arguments" : [ "timeStamp", "January 1st, 2016" ] },
-//           { "function" : "LT", "arguments" : [ "timeStamp", "January 1st, 2017" ] },
-//           { "function" : "EQUALS", "arguments" : [ "type", "PageView" ] },
-//         ]
-//       },
-//       {
-//         "function" : "GEODISTANCE",
-//         "arguments" : [ "location", "Geneva", "30km" ]
-//       }
-//     ]
-//   },
-//   "orderBy" : [
-//     { fieldName : "type", order : "ASC" },
-//     { fieldName : "properties.pageID", order : "DESC" }
-//   ]
-// }
+# query filteredEvents(filter : Filter, orderBy : [OrderBy]) {
+#   events(filter : $filter, orderBy : $orderBy) {
+#     edges {
+#       type
+#     }
+#   }
+# }
+# variables:
+# {
+#   "filterFunction": {
+#     "function" : "OR",
+#     "arguments" : [
+#       {
+#         "function" : "AND",
+#         "arguments" : [
+#           { "function" : "GT", "arguments" : [ "timeStamp", "January 1st, 2016" ] },
+#           { "function" : "LT", "arguments" : [ "timeStamp", "January 1st, 2017" ] },
+#           { "function" : "EQUALS", "arguments" : [ "type", "PageView" ] },
+#         ]
+#       },
+#       {
+#         "function" : "GEODISTANCE",
+#         "arguments" : [ "location", "Geneva", "30km" ]
+#       }
+#     ]
+#   },
+#   "orderBy" : [
+#     { fieldName : "type", order : "ASC" },
+#     { fieldName : "properties.pageID", order : "DESC" }
+#   ]
+# }
 
 union FilterArgument = Boolean | Int | Float | String | FilterFunction
 
@@ -470,7 +470,7 @@ type FilterFunction {
 }
 
 type OrderBy {
-  fieldName : String // eg : endTime, properties.location
+  fieldName : String # eg : endTime, properties.location
   order : SortOrder
 }
 
@@ -478,8 +478,8 @@ type Filter {
   filterFunction : FilterFunction
 }
 
-// PAGINATION-RELATED TYPES
-// ----------------------------------------------------------------------------
+# PAGINATION-RELATED TYPES
+# ----------------------------------------------------------------------------
 
 type PageInfo {
   hasPreviousPage : Boolean!
